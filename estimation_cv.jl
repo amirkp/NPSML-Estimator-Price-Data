@@ -7,7 +7,7 @@
 # Pkg.add("BlackBoxOptim")
 
 using Distributed
-# addprocs(8)
+addprocs()
 using Optim
 using BenchmarkTools
 using Plots
@@ -77,24 +77,71 @@ res_bcv = Optim.optimize(bcv2_fun, [0.1,.1,.1])
 h_ucv = Optim.minimizer(res_ucv)
 h_bcv = Optim.minimizer(res_bcv)
 
-m=3
-S=cov([up_data[1,:]  down_data[1,:]  price_data_cf])
-H_Silverman = (4/(n_firms*(m+2)))^(2/(m+4)) * S
+#
+# m=3
+# S=cov([up_data[1,:]  down_data[1,:]  price_data_cf])
+# H_Silverman = (4/(n_firms*(m+2)))^(2/(m+4)) * S
 # H_Scott = n_firms^(-2/(m+4)) * S
 
-h= sqrt.(diag(H_Silverman))
+# h= sqrt.(diag(H_Silverman))
+#
+#
+# hx = h[1]; hy=h[2]; hp=h[3]
+
+function sendto(p::Int; args...)
+    for (nm, val) in args
+        @spawnat(p, eval(Main, Expr(:(=), nm, val)))
+    end
+end
 
 
-hx = h[1]; hy=h[2]; hp=h[3]
-
-
+function sendto(ps::Vector{Int}; args...)
+    for p in ps
+        sendto(p; args...)
+    end
+end
 
 
 @everywhere function loglikep(b, h)
-    n_sim=500
+    @everywhere n_sim=500
     solve_draw = x->sim_data_like(up_data[1,:],[b[1], b[2], 1.], [b[3], b[4], 1.], [3., 1., 1.], [2., 1.,abs(b[5])], n_firms, b[6], 25+x)
     sim_dat = pmap(solve_draw, 1:n_sim)
+    sendto(workers(), sim_dat=sim_dat)
+    ll = @distributed (+) for i =1:n_firms
 
+        like =0.
+        for j =1:n_sim
+            # up_data_2, down_data_2, up_profit_data_cf_2, down_profit_data_cf_2, price_data_cf_2, A_mat_2, β_diff_2, β_up_2, β_down_2, Σ_up_2, Σ_down_2 =
+            #  sim_data_like(up_data[1,:],[b[1], b[2], 1.], [b[3], b[4], 1.], [3., 1., 1.], [2., 1.,abs(b[5]) ], n_firms, 25+j)
+            # like+=pdf(Normal(),((up_data[1,i] - up_data_2[1,i])/h[1])) *pdf(Normal(),((down_data[1,i] - down_data_2[1,i])/h[2]))*(pdf(Normal(),(price_data_cf[i] - price_data_cf_2[i])/h[3]))
+            like+=pdf(Normal(),((down_data[1,i] - sim_dat[j][2][1,i])/h[2]))*pdf(Normal(),((price_data_cf[i] - sim_dat[j][5][i])/h[3]))
+            # like+=(down_data[1,i] - down_data_2[1,i])/h[2]
+            # like+=(pdf(Normal(),(price_data_cf[i] - price_data_cf_2[i])/h[3]))
+        end
+
+        like = log(like/(n_sim*h[2]*h[3]))
+        # ll+=log(like/(n_sim*h[1]*h[2]*h[3]))
+        # ll[i]=log(like/(n_sim*h[2]*h[3]))
+        # ll+=log(like/(h[3]))
+        # ll+=log(like/(h[2]))
+        # ll+=like/h[2]
+    end
+    # val = norm(down_data[1,:]- down_data_2[1,:]) + norm(price_data_cf-price_data_cf_2)
+    println("parameter: ", b, " function value: ", -ll/n_firms)
+    # println("function value: ", -ll/n_firms)
+
+    # println("hi")
+    # println("pars: ", b)
+    return -ll/n_firms
+    # return ll
+end
+
+
+@everywhere function loglikep(b, h)
+    @everywhere n_sim=500
+    solve_draw = x->sim_data_like(up_data[1,:],[b[1], b[2], 1.], [b[3], b[4], 1.], [3., 1., 1.], [2., 1.,abs(b[5])], n_firms, b[6], 25+x)
+    sim_dat = pmap(solve_draw, 1:n_sim)
+    # sendto(workers(), sim_dat=sim_dat)
     ll=0.
     for i =1:n_firms
         like =0.
@@ -106,6 +153,8 @@ hx = h[1]; hy=h[2]; hp=h[3]
             # like+=(down_data[1,i] - down_data_2[1,i])/h[2]
             # like+=(pdf(Normal(),(price_data_cf[i] - price_data_cf_2[i])/h[3]))
         end
+
+        # like = log(like/(n_sim*h[2]*h[3]))
         # ll+=log(like/(n_sim*h[1]*h[2]*h[3]))
         ll+=log(like/(n_sim*h[2]*h[3]))
         # ll+=log(like/(h[3]))
@@ -128,7 +177,8 @@ end
 # println("This is like val", loglikep([200., 25, 1.5, 2., 3.], h_bcv))
 
 like_1d_1 = x-> loglikep([x, 5.5, 1.5, 2., 3.,4.], h_ucv)
-like_1d_1(2.)
+@btime like_1d_1(2.)
+# parameter: [2.0, 5.5, 1.5, 2.0, 3.0, 4.0] function value: 4.520071134964339 (Compare later with distributed form)
 plot(like_1d_1, -2., 5.)
 Optim.optimize(like_1d_1, -1., 4)
 
