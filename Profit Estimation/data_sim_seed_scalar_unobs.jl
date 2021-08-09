@@ -1,24 +1,25 @@
-function sim_data(pup, pdown, sigup, sigdown, n_firms,i)
-    β_up=zeros(3,3)
-    β_down=zeros(3,3)
-    β_up[1,1]=pup[1]
-    β_up[1,2]=pup[2]
-    β_up[2,3]=pup[3]
-    # β_up[1,3]=pup[3]
-
-    β_down[1,1]= pdown[1]
-    β_down[2,1]= pdown[2]
-    β_down[3,1]= pdown[3]
+function sim_data(β_up, β_down, Σ_up, Σ_down, n_firms,i)
+    # β_up=zeros(2,2)
+    # β_down=zeros(2,2)
+    # β_up[1,1]=pup[1]
+    # β_up[1,2]=pup[2]
+    # β_up[2,3]=pup[3]
+    # # β_up[1,3]=pup[3]
+    #
+    # β_down[1,1]= pdown[1]
+    # β_down[2,1]= pdown[2]
+    # β_down[3,1]= pdown[3]
 
     A_mat = β_up + β_down
     β_diff = β_down - β_up
 
-    Σ_up = zeros(3,3)
-    Σ_up[1,1]= sigup[1]; Σ_up[2,2]=sigup[2];  Σ_up[3,3]=sigup[3];
-    Σ_down = zeros(3,3)
-    Σ_down[1,1]= sigdown[1]; Σ_down[2,2]=sigdown[2];  Σ_down[3,3]=sigdown[3];
-    p_up = MvNormal([0; 0;0], Σ_up)
-    p_down = MvNormal([0; 0;0], Σ_down)
+
+    # Σ_up = zeros(3,3)
+    # Σ_up[1,1]= sigup[1]; Σ_up[2,2]=sigup[2];  Σ_up[3,3]=sigup[3];
+    # Σ_down = zeros(3,3)
+    # Σ_down[1,1]= sigdown[1]; Σ_down[2,2]=sigdown[2];  Σ_down[3,3]=sigdown[3];
+    p_up = MvNormal([0; 0], Σ_up)
+    p_down = MvNormal([0;0 ], Σ_down)
 
 
     # Solving for equilibrium and generating the matching (fake) data

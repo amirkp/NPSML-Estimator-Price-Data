@@ -57,5 +57,5 @@ function sim_data(pup, pdown, sigup, sigdown, n_firms,i)
     up_profit_data_cf = up_profit_data_cf .+ min_cf
     price_data_cf = price_data_cf .+ min_cf
 
-    return up_data, down_data, up_profit_data_cf, down_profit_data_cf, price_data_cf, A_mat, β_diff, β_up, β_down, Σ_up, Σ_down, t_matrix
+    return up_data, down_data, up_profit_data_cf, down_profit_data_cf, price_data_cf, A_mat, β_diff, β_up, β_down, Σ_up, Σ_down
 end

@@ -1,4 +1,4 @@
-function sim_data(pup, pdown, sigup, sigdown, n_firms,i)
+function sim_data_like(up_x, pup, pdown, sigup, sigdown, n_firms, sig_p,i)
     β_up=zeros(3,3)
     β_down=zeros(3,3)
     β_up[1,1]=pup[1]
@@ -39,7 +39,7 @@ function sim_data(pup, pdown, sigup, sigdown, n_firms,i)
     # Data Generation
 
     Random.seed!(1234+i)
-    up_data = (rand(p_up, n_firms))
+    up_data = vcat(up_x', rand(p_up, n_firms)[2:3,:])
     down_matched_data_cf = t_matrix*up_data
     down_data=copy(down_matched_data_cf)
     up_profit_data_cf = Float64[]
@@ -57,5 +57,8 @@ function sim_data(pup, pdown, sigup, sigdown, n_firms,i)
     up_profit_data_cf = up_profit_data_cf .+ min_cf
     price_data_cf = price_data_cf .+ min_cf
 
-    return up_data, down_data, up_profit_data_cf, down_profit_data_cf, price_data_cf, A_mat, β_diff, β_up, β_down, Σ_up, Σ_down, t_matrix
+    Random.seed!(1234+i)
+    price_data_cf = price_data_cf + rand(Normal(0.,sig_p), n_firms)
+
+    return up_data, down_data, up_profit_data_cf, down_profit_data_cf, price_data_cf, A_mat, β_diff, β_up, β_down, Σ_up, Σ_down
 end
