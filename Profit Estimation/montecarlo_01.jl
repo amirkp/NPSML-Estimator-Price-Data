@@ -6,21 +6,20 @@ using Distributed
 # using BSON
 # addprocs(4)
 
-# @everywhere begin
+@everywhere begin
     using Optim
     using LinearAlgebra
     using Random
     using Distributions
-    using BlackBoxOptim
-# end
+    using JuMP
+    using Gurobi
+    using KernelDensity
+end
 
-using JuMP
-using Gurobi
-using KernelDensity
-@everywhere include("data_sim_seed_scalar_unobs.jl")
+# @everywhere include("data_sim_seed_scalar_unobs.jl")
 @everywhere include("LP_DGP.jl")
-@everywhere include("data_sim_like.jl")
-@everywhere n_firms=1500
+# @everywhere include("data_sim_like.jl")
+@everywhere n_firms=500
 
 using Plots
 n_rep=1
