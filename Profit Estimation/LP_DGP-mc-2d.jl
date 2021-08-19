@@ -1,10 +1,11 @@
 function sim_data_LP(β_up, β_down, Σ_up, Σ_down, n_firms,i)
+    Random.seed!(12345+i)
     up_data = zeros(2, n_firms)
-    up_data[1,:] = rand(Normal(Σ_up[1,1], Σ_up[1,2]), n_firms)
+    up_data[1,:] = rand(LogNormal(Σ_up[1,1], Σ_up[1,2]), n_firms)
     up_data[2,:] = rand(LogNormal(Σ_up[2,1], Σ_up[2,2]), n_firms)
 
     down_data = zeros(2, n_firms)
-    down_data[1,:] = rand(Normal(Σ_down[1,1], Σ_down[1,2]), n_firms)
+    down_data[1,:] = rand(LogNormal(Σ_down[1,1], Σ_down[1,2]), n_firms)
     down_data[2,:] = rand(LogNormal(Σ_down[2,1], Σ_down[2,2]), n_firms)
 
     A_mat = β_up + β_down
