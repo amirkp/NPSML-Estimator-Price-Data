@@ -40,27 +40,36 @@ for i = 1:n_firms
     data[i,6] = down_data[2,i]
 end
 
+gurobi_env = Gurobi.Env()
+mean(data[:,1])
+median(data[:,1])
+mean(2*data[:,5])
+mean(2*data[:,6])
 
-
+median(2*data[:,5])
+median(data[:,6])
+var(data[:,5])
 
 
 function err_alt(b)
     A_mat = [b[1] b[2]; b[3] b[4]]
-
+    scale=[b[5],1.5]
     sig_up = [1. .2; 0 .2]
     sig_down = [0.5 .25; 0. .5]
 
     up_data_alt, down_data_alt, up_profit_data_alt, down_profit_data_alt, dd_alt =
-     sim_data_LP_id(A_mat, sig_up, sig_down, n_firms, 25+n_rep)
+     sim_data_LP_id(A_mat, scale, sig_up, sig_down, n_firms, 25+n_rep)
 
 
-    err = sum(up_data_alt - up_data)
+    # err =  sum(up_data_alt[2,:] - data[:,5])
+    err = sum(abs.(down_profit_data_alt - data[:, 4]))
+    println("error  is: ", err, " parameters is ",b)
     return err
 end
 
-err_alt([-3 0.7 3 0.5])
+err_alt([-3 0.7 3 0.5 1.])
 
-
+Optim.optimize(err_alt, [-3 0.7 3 0.5 1])
 
 
 plot(x-> pdf(LogNormal(1, .2), x),0 ,10)

@@ -1,9 +1,9 @@
-function sim_data_LP(A_mat, Σ_up, Σ_down, n_firms,i)
+function sim_data_LP(A_mat,bx, by, Σ_up, Σ_down, n_firms,i)
     Random.seed!(12345+i)
-    up_data = zeros(3, n_firms)
+    up_data = zeros(2, n_firms)
     up_data[1,:] = rand(LogNormal(Σ_up[1,1], Σ_up[1,2]), n_firms)
     up_data[2,:] = rand(LogNormal(Σ_up[2,1], Σ_up[2,2]), n_firms)
-    up_data[3,:] = rand(LogNormal(Σ_up[3,1], Σ_up[3,2]), n_firms)
+    # up_data[3,:] = rand(LogNormal(Σ_up[3,1], Σ_up[3,2]), n_firms)
 
     down_data = zeros(3, n_firms)
     down_data[1,:] = rand(LogNormal(Σ_down[1,1], Σ_down[1,2]), n_firms)
@@ -12,6 +12,13 @@ function sim_data_LP(A_mat, Σ_up, Σ_down, n_firms,i)
 
     # A_mat = β_up + β_down
     C = -1*Transpose(up_data)*A_mat*down_data #pairwise surplus
+    # The below loop adds in the fixed effects
+    for j = 1:n_firms
+        for i = 1:n_firms
+            C[i,j] += -(bx * up_data[1,i] + by[1]*down_data[1,j]+ by[2]*down_data[2,j])
+        end
+    end
+
 
 
 
