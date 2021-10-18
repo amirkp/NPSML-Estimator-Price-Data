@@ -1,3 +1,6 @@
+import delimited "/Users/amir/github/NPSML-Estimator-Price-Data/Profit Estimation/data_out.csv", clear 
+
+
 // To rename data after import
 
 rename v1 x 
@@ -39,10 +42,11 @@ la var epseta "EPS X ETA"
 
 cd /Users/amir/Documents/Stata
 
-reg c.x#c.y1 c.x#c.y2
+reg phi c.x#c.y1 c.x#c.y2
+outreg2 using reg1.tex, replace ctitle(Model 1)
 
 reg phi xy1 xy2, robust
-outreg2 using reg1.tex, replace ctitle(Model 1)
+outreg2 using reg2.tex, replace ctitle(Model 1)
 
 reg phi eps eta, robust
 outreg2 using reg1.tex, append ctitle(Model 2)
@@ -129,6 +133,60 @@ outreg2 using reg3.tex, append ctitle(Model 6)
 reg phiperemp xy1 xy2 epseta xeta y1eps x y1 y2 , robust 
 outreg2 using reg3.tex, append ctitle(Model 7)
 
+
+
+//
+//     mfx option can be used to report marginal effects after mfx command
+//     has been applied.
+//     sysuse auto, clear
+//     logit foreign mpg rep78 head
+//     mfx compute
+//     outreg2 using myfile, replace
+//     outreg2 using myfile, mfx ctitle(mfx) see
+
+
+
+// Marginal effects
+cd /Users/amir/Documents/Stata
+
+reg phi c.x#c.y1 c.x#c.y2, robust
+outreg2 using reg_me.tex, replace ctitle(Model 1)
+margins, dydx(x y1 y2) post
+estimates store xymargins 
+outreg2 using reg_me.tex, append ctitle(M/E 1)
+
+reg phi c.x#c.y1 c.x#c.y2 c.x c.y1 c.y2, robust
+outreg2 using reg_me.tex, append ctitle(Model 2)
+margins, dydx(x y1 y2) post
+estimates store xymargins 
+outreg2 using reg_me.tex, append ctitle(M/E 2)
+
+reg phi c.x#c.y1 c.x#c.y2 c.eps#c.eta c.y1#c.eps c.x#c.eta c.x c.y1 c.y2, robust
+outreg2 using reg_me.tex, append ctitle(Model 3)
+margins, dydx(x y1 y2) post
+estimates store xymargins 
+outreg2 using reg_me.tex, append ctitle(M/E 3)
+
+
+outreg2 using reg_me.tex, margins  ctitle(mfx)
+
+reg phi c.eps c.eta, robust
+outreg2 using reg1.tex, append ctitle(Model 2)
+
+reg phi xy1 xy2 x y1 y2, robust 
+outreg2 using reg1.tex, append ctitle(Model 3)
+
+reg phi xy1 xy2 epseta, robust 
+outreg2 using reg1.tex, append ctitle(Model 4)
+
+reg phi x y1 y2 eps eta, robust 
+outreg2 using reg1.tex, append ctitle(Model 5)
+
+reg phi xy1 xy2 epseta xeta y1eps , robust 
+outreg2 using reg1.tex, append ctitle(Model 6)
+
+reg phi xy1 xy2 epseta xeta y1eps x y1 y2 , robust 
+outreg2 using reg1.tex, append ctitle(Model 7)
 
 
 
