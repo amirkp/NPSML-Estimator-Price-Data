@@ -1996,6 +1996,13 @@ RMSE
 \end_layout
 
 \begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi\left(x,y_{1},y_{2},\epsilon,\eta\right)=\beta_{xy_{1}}xy_{1}+\beta_{xy_{2}}xy_{2}+x\eta+y_{1}\epsilon+\epsilon\eta+\gamma_{1}x+\gamma_{2}y_{1}+\gamma_{3}y_{2}
+\]
+
+\end_inset
+
 
 \end_layout
 

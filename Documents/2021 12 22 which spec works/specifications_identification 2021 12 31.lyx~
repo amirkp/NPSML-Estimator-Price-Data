@@ -1,0 +1,4105 @@
+#LyX 2.3 created this file. For more info see http://www.lyx.org/
+\lyxformat 544
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman "default" "default"
+\font_sans "default" "default"
+\font_typewriter "default" "default"
+\font_math "auto" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\use_microtype false
+\use_dash_ligatures true
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\use_hyperref false
+\papersize default
+\use_geometry false
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\use_minted 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\is_math_indent 0
+\math_numbering_side default
+\quotes_style english
+\dynamic_quotes 0
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Section
+Identification:Numerical exercise 
+\end_layout
+
+\begin_layout Subsection
+Method 1: Equivalent DGP
+\end_layout
+
+\begin_layout Standard
+This method does not involve estimation.
+ Let the data generating process be given by 
+\begin_inset Formula 
+\[
+g\left(x_{1},x_{2},\epsilon|\theta\right)=\begin{pmatrix}y_{1}^{*}\\
+y_{2}^{*}\\
+\eta^{*}\\
+p
+\end{pmatrix}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+To verify whether a specification is not identified I do the following exercise:
+\end_layout
+
+\begin_layout Enumerate
+I draw the characteristics for say 
+\begin_inset Formula $N=500$
+\end_inset
+
+ upstream firms from their parametric distribution (with a fixed random
+ seed).
+\begin_inset Formula 
+\[
+\left\{ \left(x_{1i},x_{2i},\epsilon_{i}\right)\right\} _{i=1}^{500}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+For a fixed parametric specification of the valuation functions, and for
+ a given vector of its parameters and type distribution parameters (all
+ summarized in 
+\begin_inset Formula $\theta$
+\end_inset
+
+), I find the equilibrium matches and prices 
+\begin_inset Formula 
+\[
+\left\{ \left(y_{1i}^{*},y_{2i}^{*},\eta_{i}^{*}\right),p_{i}\right\} _{i=1}^{500}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+To find whether there is a different vector of parameters resulting in the
+ same data generating process: 
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+Compute the equilibrium matches and prices for the same draw of characteristics
+ in (1), i.e.
+ the same random seed, under parameter vector 
+\begin_inset Formula $\bar{\theta}\neq\theta$
+\end_inset
+
+, denoted by 
+\begin_inset Formula 
+\[
+\left\{ \left(\bar{y}_{1i}^{*},\bar{y}_{2i}^{*},\bar{\eta}_{i}^{*}\right),\bar{p}_{i}\right\} _{i=1}^{500}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+Search for 
+\begin_inset Formula $\bar{\theta}\neq\theta$
+\end_inset
+
+ such that 
+\begin_inset Formula 
+\[
+\begin{pmatrix}y_{1i}^{*}\\
+y_{2i}^{*}\\
+\eta_{i}^{*}\\
+p_{i}
+\end{pmatrix}=\begin{pmatrix}\bar{y}_{1i}^{*}\\
+\bar{y}_{2i}^{*}\\
+\bar{\eta}_{i}^{*}\\
+\bar{p}_{i}
+\end{pmatrix},
+\]
+
+\end_inset
+
+for every 
+\begin_inset Formula $i$
+\end_inset
+
+.
+ In practice, we minimize the error 
+\begin_inset Formula 
+\[
+\left(\sum_{i=1}^{500}\left[\left(y_{1i}^{*}-\bar{y}_{1i}^{*}\right)^{2}+\left(y_{2i}^{*}-\bar{y}_{2i}^{*}\right)^{2}+\left(\eta_{i}^{*}-\bar{\eta}_{i}^{*}\right)^{2}+\left(p_{i}-\bar{p}_{i}\right)^{2}\right]\right)^{\frac{1}{2}}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+The expression in (b) is equal to zero at true parameters 
+\begin_inset Formula $\theta$
+\end_inset
+
+ by construction.
+ If for a given specification and its free parameters there is another vector
+ of parameters 
+\begin_inset Formula $\bar{\theta}\neq\theta$
+\end_inset
+
+ for which the expression in (b) is equal to zero, then that specification
+ is not identified.
+ 
+\end_layout
+
+\end_deeper
+\begin_layout Subsection
+Method 2: Observationally Equivalent 
+\end_layout
+
+\begin_layout Standard
+We start by generating a fake dataset of equilibrium matches and prices
+ under the true parameter values
+\begin_inset Formula 
+\[
+\left\{ x_{1i},x_{2i},y_{1i}^{*},y_{2i}^{*},p_{i}\right\} _{i=1}^{500}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We estimate the parameter vector 
+\begin_inset Formula $\hat{\theta}^{SML}$
+\end_inset
+
+ using the simulated maximum likelihood method and evaluate the conditional
+ log-likehood at 
+\begin_inset Formula $\hat{\theta}^{SML}$
+\end_inset
+
+ , denoted by 
+\begin_inset Formula $L\left(\hat{\theta}^{SML}\right)$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Enumerate
+For a given vector of parameters 
+\begin_inset Formula $\hat{\theta}$
+\end_inset
+
+, We simulate 100 markets 
+\begin_inset Formula 
+\[
+\left\{ \left(x_{1i},x_{2i}\right)_{i=1}^{500},\left(\epsilon_{i}^{s}\right)_{i=1}^{500},\left(y_{1i},y_{2i}\right)_{i=1}^{500},\left(\eta_{i}^{s}\right)_{i=1}^{500}\right\} _{s=1}^{100}
+\]
+
+\end_inset
+
+and solve for their equilibrium matching and prices under the parameter
+ vector 
+\begin_inset Formula $\hat{\theta}$
+\end_inset
+
+.
+ 
+\begin_inset Formula 
+\[
+\left\{ \left(x_{1i},x_{2i}\right)_{i=1}^{500},\left(y_{1i}^{*s},y_{2i}^{*s}\right)_{i=1}^{500},\left(p_{i}^{s}\right)_{i=1}^{500}\right\} _{s=1}^{100}
+\]
+
+\end_inset
+
+ Only the unobservables 
+\begin_inset Formula $\epsilon$
+\end_inset
+
+ and 
+\begin_inset Formula $\eta$
+\end_inset
+
+ are different across these 100 markets; 
+\begin_inset Formula $x$
+\end_inset
+
+ and 
+\begin_inset Formula $y$
+\end_inset
+
+ do not vary with s, however 
+\begin_inset Formula $y^{*}$
+\end_inset
+
+ depends on 
+\begin_inset Formula $s$
+\end_inset
+
+ as it is an equilibrium outcome and depends on the draw of unobservables.
+ The observable types are fixed at the observed types in the fake dataset.
+ 
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+Equilibrium prices are unique up to an additive constant.
+ In each simulation we add a constant 
+\begin_inset Formula $c$
+\end_inset
+
+ to all prices so that the mean of the prices in the simulation is the same
+ as the prices in the data.
+ 
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+Evaluate the conditional log-likelihood using the 100 simulated markets
+ in (1).
+ 
+\begin_inset Formula 
+\[
+L\left(\bm{\theta}\right)=\frac{1}{500}\sum_{i=1}^{500}\log\left(\frac{1}{100h_{y_{1}}h_{y_{2}}h_{p}}\sum_{s=1}^{100}\phi\left(\frac{y_{1i}^{*}-y_{1i}^{*s}\left(\bm{\theta}\right)}{h_{y_{1}}}\right)\cdot\phi\left(\frac{y_{2i}^{*}-y_{2i}^{*s}\left(\bm{\theta}\right)}{h_{y_{2}}}\right).\phi\left(\frac{p_{i}-p_{i}^{s}\left(\bm{\theta}\right)}{h_{p}}\right)\right).
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+Start the optimizer from a random starting point.
+ Search over all possible parameter values to find a likelihood maximizer
+ 
+\begin_inset Formula $\hat{\theta}^{SML}$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Enumerate
+Start the optimizer from the true parameters to get 
+\begin_inset Formula $\hat{\theta}^{*}$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Enumerate
+Compare 
+\begin_inset Formula $\hat{\theta}^{SML}$
+\end_inset
+
+ with 
+\begin_inset Formula $\hat{\theta}^{*}$
+\end_inset
+
+.
+ If 
+\begin_inset Formula $L\left(\hat{\theta}^{SML}\right)=L\left(\hat{\theta}^{*}\right)$
+\end_inset
+
+, i.e.
+ 
+\begin_inset Formula $\hat{\theta}^{SML}$
+\end_inset
+
+ is a global maximizer, and 
+\begin_inset Formula $\hat{\theta}^{SML}\neq\hat{\theta}^{*}$
+\end_inset
+
+, the specification is not identified.
+ 
+\end_layout
+
+\begin_layout Standard
+It is possible for Method 1 to not show that the model is not identified,
+ but Method 2 shows that the model is unidentified.
+ However, if Method 1 shows that the model is not identified, then Method
+ 2 should also be able to show non-identification.
+ 
+\end_layout
+
+\begin_layout Section
+Different Specifications 
+\end_layout
+
+\begin_layout Subsection
+Specification 1 (Identified) 
+\end_layout
+
+\begin_layout Standard
+Features: Non-separable production function.
+ No coefficient on the terms including unobservables.
+ Standard deviations of unobservables are not fixed.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}x_{1}y_{1}+\beta_{12}x_{1}y_{2}+\beta_{21}x_{2}y_{1}+x_{2}y_{2}+x_{1}\eta+\epsilon\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi^{u}\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}^{u}x_{1}y_{1}+\beta_{12}^{u}x_{1}y_{2}+\beta_{21}^{u}x_{2}y_{1}+\beta_{22}^{u}x_{2}y_{2}+x_{1}\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi^{d}\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}^{d}x_{1}y_{1}+\beta_{12}^{d}x_{1}y_{2}+\beta_{21}^{d}x_{2}y_{1}+\left(1-\beta_{22}^{u}\right)x_{2}y_{2}+\epsilon\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\sigma_{\epsilon}^{2}=?,\sigma_{\eta}^{2}=?
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Method 1 does not show non-identification.
+ 
+\end_layout
+
+\begin_layout Standard
+Method 2 cannot find other global maximizers of the likelihood function
+ other than the true parameters.
+ 
+\end_layout
+
+\begin_layout Subsection
+Specification 2(Identified)
+\begin_inset CommandInset label
+LatexCommand label
+name "subsec:identified_model"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We impose the exclusion restriction that 
+\begin_inset Formula $x_{2}y_{2}$
+\end_inset
+
+ does not enter the downstream valuation function.
+ Further, we normalize the unobservable standard deviations.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}x_{1}y_{1}+\beta_{12}x_{1}y_{2}+\beta_{21}x_{2}y_{1}+\beta_{22}^{u}x_{2}y_{2}+\beta_{13}^{u}x_{1}\eta+\beta_{33}^{d}\epsilon\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi^{u}\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}^{u}x_{1}y_{1}+\beta_{12}^{u}x_{1}y_{2}+\beta_{21}^{u}x_{2}y_{1}+\beta_{22}^{u}x_{2}y_{2}+\beta_{13}^{u}x_{1}\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi^{d}\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}^{d}x_{1}y_{1}+\beta_{12}^{d}x_{1}y_{2}+\beta_{21}^{d}x_{2}y_{1}+\beta_{33}^{d}\epsilon\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\sigma_{\epsilon}^{2}=1,\sigma_{\eta}^{2}=1
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Method 1 does not show non-identification.
+ 
+\end_layout
+
+\begin_layout Standard
+Method 2 cannot find other maximizers of the likelihood function other than
+ the true parameters.
+\end_layout
+
+\begin_layout Subsection
+Specification 3(Identified) 
+\begin_inset CommandInset label
+LatexCommand label
+name "subsec:specupstream_y_eps"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This specification replaces the 
+\begin_inset Formula $x_{1}\eta$
+\end_inset
+
+ term in upstream valuation in section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "subsec:identified_model"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+ with 
+\begin_inset Formula $y_{1}\epsilon$
+\end_inset
+
+.
+ It turns out that this model specification is identified.
+ The unobservable term in upstream's valuation can be interpreted as the
+ unobserved preference of upstream firm for 
+\begin_inset Formula $y_{1}$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}x_{1}y_{1}+\beta_{12}x_{1}y_{2}+\beta_{21}x_{2}y_{1}+\beta_{22}^{u}x_{2}y_{2}+\beta_{31}^{u}y_{1}\epsilon+\beta_{33}^{d}\epsilon\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi^{u}\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}^{u}x_{1}y_{1}+\beta_{12}^{u}x_{1}y_{2}+\beta_{21}^{u}x_{2}y_{1}+\beta_{22}^{u}x_{2}y_{2}+\beta_{31}^{u}y_{1}\epsilon
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi^{d}\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}^{d}x_{1}y_{1}+\beta_{12}^{d}x_{1}y_{2}+\beta_{21}^{d}x_{2}y_{1}+\beta_{33}^{d}\epsilon\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\sigma_{\epsilon}^{2}=1,\sigma_{\eta}^{2}=1
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Method 1 does not show non-identification.
+ 
+\end_layout
+
+\begin_layout Standard
+Method 2 cannot find other maximizers of the likelihood function other than
+ the true parameters.
+\end_layout
+
+\begin_layout Subsection
+Specification 4(Not Identified) 
+\begin_inset CommandInset label
+LatexCommand label
+name "subsec:down_y_eps"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We add 
+\begin_inset Formula $y_{1}\epsilon$
+\end_inset
+
+ to the downstream valuation to the identified model in Section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "subsec:identified_model"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}x_{1}y_{1}+\beta_{12}x_{1}y_{2}+\beta_{21}x_{2}y_{1}+\beta_{22}^{u}x_{2}y_{2}+\beta_{13}^{u}x_{1}\eta+\beta_{31}^{d}y_{1}\epsilon+\beta_{33}^{d}\epsilon\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi^{u}\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}^{u}x_{1}y_{1}+\beta_{12}^{u}x_{1}y_{2}+\beta_{21}^{u}x_{2}y_{1}+\beta_{22}^{u}x_{2}y_{2}+\beta_{13}^{u}x_{1}\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi^{d}\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}^{d}x_{1}y_{1}+\beta_{12}^{d}x_{1}y_{2}+\beta_{21}^{d}x_{2}y_{1}+\beta_{31}^{d}y_{1}\epsilon+\beta_{33}^{d}\epsilon\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\sigma_{\epsilon}^{2}=1,\sigma_{\eta}^{2}=1
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Method 1: We can find other parameters with resulting in the same DGP
+\end_layout
+
+\begin_layout Standard
+Method 2: Can find other maximizers of the log-likelihood.
+ 
+\end_layout
+
+\begin_layout Standard
+The first row in the table below is the true values of models parameters,
+ the second row are the estimates found by starting the solver from the
+ true parameters, and the third row are the estimates when solver is started
+ from another random point.
+ The value of objective function at the two estimates is the same.
+ 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+newline
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="4" columns="11">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\beta_{11}^{u}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\beta_{12}^{u}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\beta_{21}^{u}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\beta_{22}^{u}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\beta_{11}^{d}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\beta_{12}^{d}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\beta_{21}^{d}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\beta_{13}^{u}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\beta_{31}^{d}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\beta_{33}^{d}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Log-likelihood
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1.5
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+.5
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2.5
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2.5
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+-2
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1.5
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.75
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.93
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1.5
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.495
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2.496
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2.515
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+-2.0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.984
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1.583
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.802
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1.067
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1.039943360
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.567
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1.492
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.522
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2.469
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2.001
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+-1.934
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.755
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1.122
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.611
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.836
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1.039943360
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Verbatim
+
+\end_layout
+
+\begin_layout Subsection
+Specification 5(Not Identified) 
+\begin_inset CommandInset label
+LatexCommand label
+name "subsec:Specification-5(Not-Identified)"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We change the specification in section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "subsec:down_y_eps"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+ by moving the 
+\begin_inset Formula $y_{1}\epsilon$
+\end_inset
+
+ term to the upstream valuation.
+ The model is still not identified.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}x_{1}y_{1}+\beta_{12}x_{1}y_{2}+\beta_{21}x_{2}y_{1}+\beta_{22}^{u}x_{2}y_{2}+\beta_{13}^{u}x_{1}\eta+\beta_{31}^{u}y_{1}\epsilon+\beta_{33}^{d}\epsilon\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi^{u}\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}^{u}x_{1}y_{1}+\beta_{12}^{u}x_{1}y_{2}+\beta_{21}^{u}x_{2}y_{1}+\beta_{22}^{u}x_{2}y_{2}+\beta_{31}^{u}y_{1}\epsilon+\beta_{13}^{u}x_{1}\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi^{d}\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}^{d}x_{1}y_{1}+\beta_{12}^{d}x_{1}y_{2}+\beta_{21}^{d}x_{2}y_{1}+\beta_{33}^{d}\epsilon\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\sigma_{\epsilon}^{2}=1,\sigma_{\eta}^{2}=1
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Method 1: We can find other parameters with resulting in the same DGP
+\end_layout
+
+\begin_layout Standard
+Method 2: Can find other maximizers of the log-likelihood.
+ 
+\end_layout
+
+\begin_layout Subsection
+Specification 6 (Not Identified)
+\end_layout
+
+\begin_layout Standard
+Features: Includes coefficient on 
+\begin_inset Formula $x_{1}\eta$
+\end_inset
+
+.
+ Flexible standard deviations.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}x_{1}y_{1}+\beta_{12}x_{1}y_{2}+\beta_{21}x_{2}y_{1}+x_{2}y_{2}+\beta_{13}^{u}x_{1}\eta+\epsilon\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi^{u}\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}^{u}x_{1}y_{1}+\beta_{12}^{u}x_{1}y_{2}+\beta_{21}^{u}x_{2}y_{1}+\beta_{22}^{u}x_{2}y_{2}+\beta_{13}^{u}x_{1}\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi^{d}\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}^{d}x_{1}y_{1}+\beta_{12}^{d}x_{1}y_{2}+\beta_{21}^{d}x_{2}y_{1}+\left(1-\beta_{22}^{u}\right)x_{2}y_{2}+\epsilon\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\sigma_{\epsilon}^{2}=?,\sigma_{\eta}^{2}=?
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Method 1: 
+\begin_inset Formula $\beta_{13}^{u},\sigma_{\epsilon}^{2},\sigma_{\eta}^{2}$
+\end_inset
+
+ are not identified, i.e.
+ there are other combinations of 
+\begin_inset Formula $\beta_{13}^{u},\sigma_{\epsilon}^{2},\sigma_{\eta}^{2}$
+\end_inset
+
+ different from the true values resulting in the same DGP.
+ 
+\end_layout
+
+\begin_layout Standard
+Method 2: It confirms that 
+\begin_inset Formula $\beta_{13}^{u},\sigma_{\epsilon}^{2},\sigma_{\eta}^{2}$
+\end_inset
+
+ are not identified.
+ It can correctly estimate the other parameters.
+ 
+\end_layout
+
+\begin_layout Subsection
+Specification 7 (Not Identified)
+\end_layout
+
+\begin_layout Standard
+Features: Coefficient on 
+\begin_inset Formula $x_{2}y_{2}$
+\end_inset
+
+ in the match production function is not normalized.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}x_{1}y_{1}+\beta_{12}x_{1}y_{2}+\beta_{21}x_{2}y_{1}+\beta_{22}x_{2}y_{2}+x_{1}\eta+\epsilon\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi^{u}\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}^{u}x_{1}y_{1}+\beta_{12}^{u}x_{1}y_{2}+\beta_{21}^{u}x_{2}y_{1}+\beta_{22}^{u}x_{2}y_{2}+x_{1}\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi^{d}\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}^{d}x_{1}y_{1}+\beta_{12}^{d}x_{1}y_{2}+\beta_{21}^{d}x_{2}y_{1}+\beta_{22}^{d}x_{2}y_{2}+\epsilon\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\sigma_{\epsilon}^{2}=?,\sigma_{\eta}^{2}=?
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Method 1: 
+\begin_inset Formula $\beta$
+\end_inset
+
+ coefficients are not identified.
+ 
+\end_layout
+
+\begin_layout Standard
+Method 2 : 
+\begin_inset Formula $\sigma_{\epsilon}^{2}$
+\end_inset
+
+ and 
+\begin_inset Formula $\sigma_{\eta}^{2}$
+\end_inset
+
+ are correctly estimated.
+ 
+\begin_inset Formula $\beta$
+\end_inset
+
+ coefficients are not.
+ 
+\end_layout
+
+\begin_layout Standard
+
+\bar under
+Even if we fix the standard deviations, the 
+\begin_inset Formula $\beta$
+\end_inset
+
+ coefficients are not identified.
+
+\bar default
+ 
+\end_layout
+
+\begin_layout Subsection
+Specification 8 (Identified) 
+\end_layout
+
+\begin_layout Standard
+Features: coefficient on the non-separable term and flexible standard deviation
+ of 
+\begin_inset Formula $\epsilon$
+\end_inset
+
+, but fixing the standard deviation of 
+\begin_inset Formula $\eta$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}x_{1}y_{1}+\beta_{12}x_{1}y_{2}+\beta_{21}x_{2}y_{1}+x_{2}y_{2}+\beta_{13}^{u}x_{1}\eta+\epsilon\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi^{u}\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}^{u}x_{1}y_{1}+\beta_{12}^{u}x_{1}y_{2}+\beta_{21}^{u}x_{2}y_{1}+\beta_{22}^{u}x_{2}y_{2}+\beta_{13}^{u}x_{1}\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi^{d}\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}^{d}x_{1}y_{1}+\beta_{12}^{d}x_{1}y_{2}+\beta_{21}^{d}x_{2}y_{1}+\left(1-\beta_{22}^{u}\right)x_{2}y_{2}+\epsilon\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\sigma_{\epsilon}^{2}=?,\sigma_{\eta}^{2}=1
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Method 1: does not show non-identification.
+ 
+\end_layout
+
+\begin_layout Standard
+Method 2: cannot find other maximizers of the likelihood function other
+ than the true parameters.
+ 
+\end_layout
+
+\begin_layout Subsection
+Specification 9 (Identified) 
+\end_layout
+
+\begin_layout Standard
+Features: similar to specification 8, but normalizing 
+\begin_inset Formula $\sigma_{\epsilon}^{2}$
+\end_inset
+
+ instead of 
+\begin_inset Formula $\sigma_{\eta}^{2}.$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}x_{1}y_{1}+\beta_{12}x_{1}y_{2}+\beta_{21}x_{2}y_{1}+x_{2}y_{2}+\beta_{13}^{u}x_{1}\eta+\epsilon\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi^{u}\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}^{u}x_{1}y_{1}+\beta_{12}^{u}x_{1}y_{2}+\beta_{21}^{u}x_{2}y_{1}+\beta_{22}^{u}x_{2}y_{2}+\beta_{13}^{u}x_{1}\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi^{d}\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}^{d}x_{1}y_{1}+\beta_{12}^{d}x_{1}y_{2}+\beta_{21}^{d}x_{2}y_{1}+\left(1-\beta_{22}^{u}\right)x_{2}y_{2}+\epsilon\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\sigma_{\epsilon}^{2}=1,\sigma_{\eta}^{2}=?
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Method 1: does not show non-identification.
+ 
+\end_layout
+
+\begin_layout Standard
+Method 2: cannot find other maximizers of the likelihood function other
+ than the true parameters.
+ 
+\end_layout
+
+\begin_layout Subsection
+Specification 10 (Not Identified) 
+\end_layout
+
+\begin_layout Standard
+Features: similar to specification 9, but allowing for extra coefficient
+ on 
+\begin_inset Formula $\epsilon\eta$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}x_{1}y_{1}+\beta_{12}x_{1}y_{2}+\beta_{21}x_{2}y_{1}+\beta_{22}x_{2}y_{2}+\beta_{13}^{u}x_{1}\eta+\epsilon\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi^{u}\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}^{u}x_{1}y_{1}+\beta_{12}^{u}x_{1}y_{2}+\beta_{21}^{u}x_{2}y_{1}+\beta_{22}^{u}x_{2}y_{2}+\beta_{13}^{u}x_{1}\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi^{d}\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}^{d}x_{1}y_{1}+\beta_{12}^{d}x_{1}y_{2}+\beta_{21}^{d}x_{2}y_{1}+\left(1-\beta_{22}^{u}\right)x_{2}y_{2}+\left(1-\beta_{33}^{u}\right)\epsilon\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\sigma_{\epsilon}^{2}=1,\sigma_{\eta}^{2}=?
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Method 1: does not show non-identification.
+ 
+\end_layout
+
+\begin_layout Standard
+Method 2: cannot find other maximizers of the likelihood function other
+ than the true parameters.
+ 
+\end_layout
+
+\begin_layout Subsection
+Specification 11 (Not Identified)
+\end_layout
+
+\begin_layout Standard
+Features: similar to 8 adding another possible non-separable term, i.e.
+ 
+\begin_inset Formula $y_{1}\epsilon$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}x_{1}y_{1}+\beta_{12}x_{1}y_{2}+\beta_{21}x_{2}y_{1}+\beta_{22}x_{2}y_{2}+\beta_{13}^{u}x_{1}\eta+\beta_{31}^{d}y_{1}\epsilon+\epsilon\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi^{u}\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}^{u}x_{1}y_{1}+\beta_{12}^{u}x_{1}y_{2}+\beta_{21}^{u}x_{2}y_{1}+\beta_{22}^{u}x_{2}y_{2}+\beta_{13}^{u}x_{1}\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi^{d}\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}^{d}x_{1}y_{1}+\beta_{12}^{d}x_{1}y_{2}+\beta_{21}^{d}x_{2}y_{1}+\left(1-\beta_{22}^{u}\right)x_{2}y_{2}+\beta_{31}^{d}y_{1}\epsilon+\epsilon\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\sigma_{\epsilon}^{2}=?,\sigma_{\eta}^{2}=1
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Method 1: We can find other parameters with resulting in the same DGP
+\end_layout
+
+\begin_layout Standard
+Method 2: Can find other maximizers of the log-likelihood.
+ 
+\end_layout
+
+\begin_layout Subsection
+Specification 12 (Identified) 
+\end_layout
+
+\begin_layout Standard
+Features: coefficient on all unobservable terms but fixed standard deviations.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}x_{1}y_{1}+\beta_{12}x_{1}y_{2}+\beta_{21}x_{2}y_{1}+\beta_{22}x_{2}y_{2}+\beta_{13}^{u}x_{1}\eta+\beta_{31}^{d}y_{1}\epsilon+\beta_{33}^{d}\epsilon\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi^{u}\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}^{u}x_{1}y_{1}+\beta_{12}^{u}x_{1}y_{2}+\beta_{21}^{u}x_{2}y_{1}+\beta_{22}^{u}x_{2}y_{2}+\beta_{13}^{u}x_{1}\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi^{d}\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}^{d}x_{1}y_{1}+\beta_{12}^{d}x_{1}y_{2}+\beta_{21}^{d}x_{2}y_{1}+\left(1-\beta_{22}^{u}\right)x_{2}y_{2}+\beta_{33}^{d}\epsilon\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\sigma_{\epsilon}^{2}=1,\sigma_{\eta}^{2}=1
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Method 1: does not show non-identification.
+ 
+\end_layout
+
+\begin_layout Standard
+Method 2: cannot find other maximizers of the likelihood function other
+ than the true parameters.
+ 
+\end_layout
+
+\begin_layout Subsection
+Specification 13 (Identified) 
+\end_layout
+
+\begin_layout Standard
+Features: similar to 8 but fixing both standard deviations.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}x_{1}y_{1}+\beta_{12}x_{1}y_{2}+\beta_{21}x_{2}y_{1}+\beta_{22}x_{2}y_{2}+\beta_{13}^{u}x_{1}\eta+\beta_{31}^{d}y_{1}\epsilon+\epsilon\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi^{u}\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}^{u}x_{1}y_{1}+\beta_{12}^{u}x_{1}y_{2}+\beta_{21}^{u}x_{2}y_{1}+\beta_{22}^{u}x_{2}y_{2}+\beta_{13}^{u}x_{1}\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi^{d}\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}^{d}x_{1}y_{1}+\beta_{12}^{d}x_{1}y_{2}+\beta_{21}^{d}x_{2}y_{1}+\left(1-\beta_{22}^{u}\right)x_{2}y_{2}+\beta_{31}^{d}y_{1}\epsilon+\epsilon\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\sigma_{\epsilon}^{2}=1,\sigma_{\eta}^{2}=1
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Method 1: does not show non-identification.
+ 
+\end_layout
+
+\begin_layout Standard
+Method 2: cannot find other maximizers of the likelihood function other
+ than the true parameters.
+ 
+\end_layout
+
+\begin_layout Subsection
+Specification 14 (Not Identified)
+\end_layout
+
+\begin_layout Standard
+Adding an extra coefficient on 
+\begin_inset Formula $\epsilon\eta$
+\end_inset
+
+ term.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}x_{1}y_{1}+\beta_{12}x_{1}y_{2}+\beta_{21}x_{2}y_{1}+\beta_{22}x_{2}y_{2}+\beta_{13}^{u}x_{1}\eta+\beta_{31}^{d}y_{1}\epsilon+\beta_{33}^{d}\epsilon\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi^{u}\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}^{u}x_{1}y_{1}+\beta_{12}^{u}x_{1}y_{2}+\beta_{21}^{u}x_{2}y_{1}+\beta_{22}^{u}x_{2}y_{2}+\beta_{13}^{u}x_{1}\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi^{d}\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}^{d}x_{1}y_{1}+\beta_{12}^{d}x_{1}y_{2}+\beta_{21}^{d}x_{2}y_{1}+\left(1-\beta_{22}^{u}\right)x_{2}y_{2}+\beta_{31}^{d}y_{2}\epsilon+\beta_{33}^{d}\epsilon\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\sigma_{\epsilon}^{2}=1,\sigma_{\eta}^{2}=1
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Method 1: We can find other parameters with resulting in the same DGP
+\end_layout
+
+\begin_layout Standard
+Method 2: Can find other maximizers of the log-likelihood.
+ 
+\end_layout
+
+\begin_layout Subsection
+Specification 15 (Not Identified) 
+\end_layout
+
+\begin_layout Standard
+Feature: coefficient on all unobservables.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}x_{1}y_{1}+\beta_{12}x_{1}y_{2}+\beta_{21}x_{2}y_{1}+\beta_{22}x_{2}y_{2}+\beta_{13}^{u}x_{1}\eta+\beta_{31}^{d}y_{1}\epsilon+\beta_{33}\epsilon\eta
+\]
+
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi^{u}\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}^{u}x_{1}y_{1}+\beta_{12}^{u}x_{1}y_{2}+\beta_{21}^{u}x_{2}y_{1}+\beta_{22}^{u}x_{2}y_{2}+\beta_{13}^{u}x_{1}\eta+\beta_{33}^{u}\epsilon\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi^{d}\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}^{d}x_{1}y_{1}+\beta_{12}^{d}x_{1}y_{2}+\beta_{21}^{d}x_{2}y_{1}+\left(1-\beta_{22}^{u}\right)x_{2}y_{2}+\beta_{33}^{d}\epsilon\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\sigma_{\epsilon}^{2}=1,\sigma_{\eta}^{2}=1
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Method 1: We can find other parameters with resulting in the same DGP
+\end_layout
+
+\begin_layout Standard
+Method 2: Can find other maximizers of the log-likelihood.
+ 
+\end_layout
+
+\begin_layout Subsection
+Specification 16 (Identified) 
+\end_layout
+
+\begin_layout Standard
+Adding an extra coefficient on 
+\begin_inset Formula $\epsilon\eta$
+\end_inset
+
+ term on both the upstream and the downstream firms.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}x_{1}y_{1}+\beta_{12}x_{1}y_{2}+\beta_{21}x_{2}y_{1}+\beta_{22}x_{2}y_{2}+\beta_{13}^{u}x_{1}\eta+\epsilon\eta
+\]
+
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi^{u}\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}^{u}x_{1}y_{1}+\beta_{12}^{u}x_{1}y_{2}+\beta_{21}^{u}x_{2}y_{1}+\beta_{22}^{u}x_{2}y_{2}+\beta_{13}^{u}x_{1}\eta+\beta_{33}^{u}\epsilon\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi^{d}\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}^{d}x_{1}y_{1}+\beta_{12}^{d}x_{1}y_{2}+\beta_{21}^{d}x_{2}y_{1}+\left(1-\beta_{22}^{u}\right)x_{2}y_{2}+(1-\beta_{33}^{u})\epsilon\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\sigma_{\epsilon}^{2}=1,\sigma_{\eta}^{2}=1
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Method 1: does not show non-identification.
+ 
+\end_layout
+
+\begin_layout Standard
+Method 2: cannot find other maximizers of the likelihood function other
+ than the true parameters.
+ 
+\end_layout
+
+\begin_layout Subsection
+Specification 17 (Identified) 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}x_{1}y_{1}+\beta_{12}x_{1}y_{2}+\beta_{21}x_{2}y_{1}+\beta_{22}x_{2}y_{2}+\beta_{13}^{u}x_{1}\eta+\beta_{33}^{u}\epsilon\eta
+\]
+
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi^{u}\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}^{u}x_{1}y_{1}+\beta_{12}^{u}x_{1}y_{2}+\beta_{21}^{u}x_{2}y_{1}+\beta_{22}^{u}x_{2}y_{2}+\beta_{13}^{u}x_{1}\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi^{d}\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}^{d}x_{1}y_{1}+\beta_{12}^{d}x_{1}y_{2}+\beta_{21}^{d}x_{2}y_{1}+\left(1-\beta_{22}^{u}\right)x_{2}y_{2}+\beta_{33}^{u}\epsilon\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\sigma_{\epsilon}^{2}=1,\sigma_{\eta}^{2}=1
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Method 1: does not show non-identification.
+ 
+\end_layout
+
+\begin_layout Standard
+Method 2: cannot find other maximizers of the likelihood function other
+ than the true parameters.
+ 
+\end_layout
+
+\begin_layout Subsection
+Specification 18 (Not Identified) 
+\end_layout
+
+\begin_layout Standard
+Adding an extra non separable term 
+\begin_inset Formula $y_{1}\epsilon$
+\end_inset
+
+ with a coefficient to downstream valuation.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}x_{1}y_{1}+\beta_{12}x_{1}y_{2}+\beta_{21}x_{2}y_{1}+\beta_{22}x_{2}y_{2}+\beta_{13}^{u}x_{1}\eta+\beta_{31}^{d}y_{1}\epsilon+\epsilon\eta
+\]
+
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi^{u}\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}^{u}x_{1}y_{1}+\beta_{12}^{u}x_{1}y_{2}+\beta_{21}^{u}x_{2}y_{1}+\beta_{22}^{u}x_{2}y_{2}+\beta_{13}^{u}x_{1}\eta+\beta_{33}^{u}\epsilon\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi^{d}\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}^{d}x_{1}y_{1}+\beta_{12}^{d}x_{1}y_{2}+\beta_{21}^{d}x_{2}y_{1}+\left(1-\beta_{22}^{u}\right)x_{2}y_{2}+\beta_{31}^{d}y_{1}\epsilon+(1-\beta_{33}^{u})\epsilon\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\sigma_{\epsilon}^{2}=1,\sigma_{\eta}^{2}=1
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Method 1: We can find other parameters with resulting in the same DGP
+\end_layout
+
+\begin_layout Standard
+Method 2: Can find other maximizers of the log-likelihood.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+newpage
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Why Specification 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "subsec:Specification-5(Not-Identified)"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+ is not identified
+\end_layout
+
+\begin_layout Standard
+Recall Specification 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "subsec:Specification-5(Not-Identified)"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}x_{1}y_{1}+\beta_{12}x_{1}y_{2}+\beta_{21}x_{2}y_{1}+\beta_{22}^{u}x_{2}y_{2}+\beta_{13}^{u}x_{1}\eta+\beta_{31}^{u}y_{1}\epsilon+\beta_{33}^{d}\epsilon\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\Phi^{u}\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}^{u}x_{1}y_{1}+\beta_{12}^{u}x_{1}y_{2}+\beta_{21}^{u}x_{2}y_{1}+\beta_{22}^{u}x_{2}y_{2}+\beta_{31}^{u}y_{1}\epsilon+\beta_{13}^{u}x_{1}\eta\label{eq:upval1}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi^{d}\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}^{d}x_{1}y_{1}+\beta_{12}^{d}x_{1}y_{2}+\beta_{21}^{d}x_{2}y_{1}+\beta_{33}^{d}\epsilon\eta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\sigma_{\epsilon}^{2}=1,\sigma_{\eta}^{2}=1
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Preliminary numerical exercise above showed that specifications with two
+ additive error terms in individual valuation functions are not identified.
+ This means that we are allowed to include only one such unobserved term
+ in each of the upstream and the downstream valuation functions.
+ In here, the upstream valuation function includes two unobserved terms,
+ i.e.
+ 
+\begin_inset Formula $\beta_{31}^{u}y_{1}\epsilon$
+\end_inset
+
+ and 
+\begin_inset Formula $\beta_{13}^{u}\epsilon\eta$
+\end_inset
+
+.
+ Alternatively, the downstream valuation can include one of these interactions
+ of the observed and unobserved types in addition to the 
+\begin_inset Formula $\beta^{d}\epsilon\eta$
+\end_inset
+
+.
+ This would result in a non-identified model again.
+ 
+\end_layout
+
+\begin_layout Standard
+There is no simple proof to show non-identification using algebra.
+ The valuation functions affect prices through a complicated non-linear
+ relation given by the structural function which is the solution to the
+ optimal transport problem.
+ 
+\end_layout
+
+\begin_layout Standard
+The vector of parameters to be estimated is given by
+\begin_inset Formula 
+\[
+\bm{\theta}=\left(\beta_{11}^{u},\beta_{12}^{u},\beta_{21}^{u},\beta_{22}^{u},\beta_{11}^{d},\beta_{12}^{d},\beta_{21}^{d},\beta_{13}^{u},\beta_{31}^{u},\beta_{33}^{d}\right).
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+I start by fixing the coefficient on the unobservable term 
+\begin_inset Formula $y_{1}\epsilon$
+\end_inset
+
+, i.e.
+ 
+\begin_inset Formula $\beta_{31}^{u}$
+\end_inset
+
+ ,at a value different from truth.
+ I fix all other coefficients at the true parameter values, except for 
+\begin_inset Formula $\left(\beta_{13}^{u},\beta_{33}^{d}\right)$
+\end_inset
+
+.
+ Then, we search for the maximizer of the log-likelihood function over all
+ values of the two free parameters 
+\begin_inset Formula $\left(\beta_{13}^{u},\beta_{33}^{d}\right)$
+\end_inset
+
+.
+ The goal is to find out whether we can find values for the other two coefficien
+ts on the unobservable terms that lead to an observationally equivalent
+ model.
+ However, the value of the log-likelihood function at the maximizers is
+ different from the one in the unconstrained maximization.
+ This means, there no such observationally equivalent parameterization where
+ the parameters differ only on the coefficients of the unobserved terms.
+ 
+\end_layout
+
+\begin_layout Standard
+I continued doing this by increasing the number of free parameters, i.e.
+ searching for observationally equivalent parameterization where some of
+ the coefficients on the observable terms differ from the truth.
+ Value of the log-likelihood function in none of these maximization problems
+ was equal to the unconstrained problem.
+ 
+\end_layout
+
+\begin_layout Standard
+The only possible way to achieve the same likelihood value in a parameterization
+ where 
+\begin_inset Formula $\beta_{31}^{u}$
+\end_inset
+
+ is fixed at a different value from the truth is to search over all the
+ remaining 9 parameters in the model.
+ The maximizer of the likelihood maximization problem with 9 free parameters
+ and one parameter fixed at a value different from zero seems to be unique
+ up to the sign of the coefficients on the unobservable, i.e.
+ multiplying -1 by all three coefficients on the unobservable terms 
+\begin_inset Formula $\left(\beta_{13}^{u},\beta_{31}^{u},\beta_{33}^{d}\right)$
+\end_inset
+
+ results in an observationally equivalent specification.
+ 
+\end_layout
+
+\begin_layout Standard
+The table below shows three observationally equivalent parameterization.
+ The first row is when 
+\begin_inset Formula $\beta_{31}^{u}$
+\end_inset
+
+ is fixed at the truth.
+ The second and the third row are computed by increasing 
+\begin_inset Formula $\beta_{31}^{u}$
+\end_inset
+
+ (last column) by 
+\begin_inset Formula $0.1$
+\end_inset
+
+ compared to the row above.
+ The likelihood value is exactly the same for all three.
+ The superscript of 
+\begin_inset Formula $\theta$
+\end_inset
+
+ denotes the value of 
+\begin_inset Formula $\beta_{31}^{u}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="4" columns="11">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\beta_{11}^{u}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\beta_{12}^{u}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\beta_{21}^{u}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\beta_{22}^{u}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\beta_{11}^{d}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\beta_{12}^{d}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\beta_{21}^{d}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\beta_{13}^{u}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\beta_{33}^{d}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\beta_{31}^{u}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\theta$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.908
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1.501
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.483
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2.493
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2.495
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+-2.0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.984
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+-1.072
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1.569
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.556
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\theta^{.656}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1.066
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1.506
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.468
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2.506
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2.731
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+-2.031
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1.09
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+-1.185
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1.796
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.656
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\theta^{.756}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1.224
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1.51
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.453
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2.518
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2.967
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+-2.061
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1.196
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+-1.298 
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2.023
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.756
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The first observation is that changing 
+\begin_inset Formula $\beta_{31}^{u}$
+\end_inset
+
+ changes all other parameters.
+ The second observation is that for all 
+\begin_inset Formula $i=1,\dots,10$
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\frac{\theta_{i}^{.656}-\theta_{i}}{0.1}=\frac{\theta_{i}^{.756}-\theta_{i}^{.656}}{0.1}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+I continued finding observationally equivalent parameterization 
+\begin_inset Formula $\theta_{i}^{5},\theta_{i}^{10},\theta_{i}^{50}$
+\end_inset
+
+ by fixing 
+\begin_inset Formula $\beta_{31}^{u}$
+\end_inset
+
+ at 5, 10, and 50 and searching for other parameters.
+ For each of these values, I also found the observationally equivalent parameter
+izations after increasing the fixed value of 
+\begin_inset Formula $\beta_{31}^{u}$
+\end_inset
+
+ by 
+\begin_inset Formula $0.1$
+\end_inset
+
+.
+ I find the rate of change seems to be constant, i.e.
+ for each element 
+\begin_inset Formula $i$
+\end_inset
+
+ of the vectors of parameters
+\begin_inset Formula 
+\[
+\frac{\theta_{i}^{50.1}-\theta_{i}^{50}}{0.1}=\frac{\theta_{i}^{10.1}-\theta_{i}^{10}}{0.1}=\frac{\theta_{i}^{5.1}-\theta_{i}^{5}}{0.1}=\frac{\theta_{i}^{.756}-\theta_{i}^{.656}}{0.1}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+I also experimented with increments smaller and greater than 0.1 , and the
+ rates of change seem to be constant.
+ This means if we varied the values of 
+\begin_inset Formula $\beta_{31}^{u}$
+\end_inset
+
+ and found the maximizers of the likelihood function and plotted each of
+ the 9 parameters against 
+\begin_inset Formula $\beta_{31}^{u}$
+\end_inset
+
+, we will have a straight line with different slope.
+ Therefore, for every 
+\begin_inset Formula $c\in\mathbb{R}$
+\end_inset
+
+, the parameterization given by 
+\begin_inset Formula 
+\[
+\bm{\theta}=\left(\beta_{11}^{u},\beta_{12}^{u},\beta_{21}^{u},\beta_{22}^{u},\beta_{11}^{d},\beta_{12}^{d},\beta_{21}^{d},\beta_{13}^{u},\beta_{33}^{d},\beta_{31}^{u}\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+is equivalent to 
+\begin_inset Formula 
+\[
+\tilde{\theta}=c\left(\gamma_{1}\beta_{11}^{u},\gamma_{2}\beta_{12}^{u},\gamma_{3}\beta_{21}^{u},\gamma_{4}\beta_{22}^{u},\gamma_{5}\beta_{11}^{d},\gamma_{6}\beta_{12}^{d},\gamma_{7}\beta_{21}^{d},\gamma_{8}\beta_{13}^{u},\gamma_{9}\beta_{33}^{d},\beta_{31}^{u}\right).
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+where 
+\begin_inset Formula $\gamma$
+\end_inset
+
+ parameters are the rates of changes (slopes) as explained above, which
+ are function of the structural parameters.
+ 
+\end_layout
+
+\begin_layout Section
+Why 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "subsec:identified_model"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+ is identified
+\end_layout
+
+\begin_layout Standard
+The price equation is 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align}
+p\left(x_{1},x_{2},\epsilon\right) & =\frac{1}{2}\begin{pmatrix}x_{1}\\
+x_{2}\\
+\epsilon
+\end{pmatrix}^{'}B\cdot T\cdot\begin{pmatrix}x_{1}\\
+x_{2}\\
+\epsilon
+\end{pmatrix}\label{eq:peq}\\
+ & =\frac{1}{2}\begin{pmatrix}x_{1}\\
+x_{2}\\
+\epsilon
+\end{pmatrix}^{'}\begin{pmatrix}\beta_{11}^{d}-\beta_{11}^{u} & \beta_{12}^{d}-\beta_{12}^{u} & -\beta_{13}^{u}\\
+\beta_{21}^{d}-\beta_{21}^{u} & -\beta_{22}^{u} & 0\\
+-\beta_{31}^{u} & 0 & \beta_{33}^{d}
+\end{pmatrix}\cdot\begin{pmatrix}t_{11} & t_{12} & t_{13}\\
+t_{21} & t_{22} & t_{23}\\
+t_{31} & t_{32} & t_{33}
+\end{pmatrix}\cdot\begin{pmatrix}x_{1}\\
+x_{2}\\
+\epsilon
+\end{pmatrix}.\nonumber 
+\end{align}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+and the matching equation is 
+\begin_inset Formula 
+\[
+\begin{pmatrix}y_{1}\\
+y_{2}\\
+\eta
+\end{pmatrix}=\begin{pmatrix}t_{11} & t_{12} & t_{13}\\
+t_{21} & t_{22} & t_{23}\\
+t_{31} & t_{32} & t_{33}
+\end{pmatrix}\begin{pmatrix}x_{1}\\
+x_{2}\\
+\epsilon
+\end{pmatrix}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The matrix 
+\begin_inset Formula $T$
+\end_inset
+
+ is a non-trivial function of the following 7 parameters
+\begin_inset Formula 
+\[
+\left(\beta_{11}^{d}+\beta_{11}^{u}\right),\left(\beta_{12}^{d}+\beta_{12}^{u}\right),\left(\beta_{21}^{d}+\beta_{21}^{u}\right),\beta_{22}^{u},\beta_{13}^{u},\beta_{31}^{u},\beta_{33}^{d},
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+and is given by 
+\begin_inset Formula 
+\begin{equation}
+T=\Sigma_{Y}^{1/2}\left(\Sigma_{Y}^{1/2}A'\Sigma_{X}A\Sigma_{Y}^{1/2}\right)^{-1/2}\Sigma_{Y}^{1/2}A',\label{eq:matchingeq}
+\end{equation}
+
+\end_inset
+
+where 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Sigma_{Y}=\begin{pmatrix}\sigma_{y_{1}} & 0 & 0\\
+0 & \sigma_{y_{2}} & 0\\
+0 & 0 & 1
+\end{pmatrix}\quad\Sigma_{X}=\begin{pmatrix}\sigma_{x_{1}} & 0 & 0\\
+0 & \sigma_{x_{2}} & 0\\
+0 & 0 & 1
+\end{pmatrix}\quad A=\begin{pmatrix}\beta_{11}^{d}+\beta_{11}^{u} & \beta_{12}^{d}+\beta_{12}^{u} & \beta_{13}^{u}\\
+\beta_{21}^{d}+\beta_{21}^{u} & \beta_{22}^{u} & 0\\
+\beta_{31}^{u} & 0 & \beta_{33}^{d}
+\end{pmatrix}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The first numerical observations is that for two observationally equivalent
+ 
+\begin_inset Formula $\theta$
+\end_inset
+
+ and 
+\begin_inset Formula $\tilde{\theta}$
+\end_inset
+
+ where 
+\begin_inset Formula $\theta\neq\tilde{\theta}$
+\end_inset
+
+, the matching matrices are equal element-wise, i.e.
+ 
+\begin_inset Formula $T=\tilde{T}$
+\end_inset
+
+.
+ However, the 
+\begin_inset Formula $B$
+\end_inset
+
+ matrices under 
+\begin_inset Formula $T$
+\end_inset
+
+ and 
+\begin_inset Formula $\tilde{T}$
+\end_inset
+
+ are not the same.
+ 
+\end_layout
+
+\begin_layout Standard
+Every quadratic form 
+\begin_inset Formula $x'Dx$
+\end_inset
+
+ for some matrix 
+\begin_inset Formula $D$
+\end_inset
+
+, can be equivalently represented by a symmetric matrix given by 
+\begin_inset Formula $\frac{D+D'}{2}$
+\end_inset
+
+.
+ Therefore, we can rewrite the equivalent form of Equation 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:peq"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+ as 
+\begin_inset Formula 
+\begin{equation}
+p\left(x_{1},x_{2},\epsilon\right)=\frac{1}{2}\begin{pmatrix}x_{1}\\
+x_{2}\\
+\epsilon
+\end{pmatrix}^{'}\cdot\frac{B\cdot T+T'B'}{2}\cdot\begin{pmatrix}x_{1}\\
+x_{2}\\
+\epsilon
+\end{pmatrix}.
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Let us define the symmetric matrix characterizing the price quadratic form
+ as 
+\begin_inset Formula $K\equiv\frac{B\cdot T+T'B'}{2}$
+\end_inset
+
+.
+ It turns out that matrix 
+\begin_inset Formula $K$
+\end_inset
+
+ under 
+\begin_inset Formula $\theta$
+\end_inset
+
+ and matrix 
+\begin_inset Formula $\tilde{K}$
+\end_inset
+
+ under 
+\begin_inset Formula $\tilde{\theta}$
+\end_inset
+
+ are equal.
+ 
+\begin_inset Formula $K$
+\end_inset
+
+ is characterized by only 
+\begin_inset Formula $6$
+\end_inset
+
+ numbers instead of 
+\begin_inset Formula $9$
+\end_inset
+
+ since it is a symmetric matrix
+\begin_inset Formula 
+\[
+K=\begin{pmatrix}K_{11} & K_{12} & K_{13}\\
+K_{12} & K_{22} & K_{23}\\
+K_{13} & K_{23} & K_{33}
+\end{pmatrix}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+If we naively look at matrices 
+\begin_inset Formula $K$
+\end_inset
+
+ and 
+\begin_inset Formula $T$
+\end_inset
+
+ without paying attention they are related we can say the data on matching
+ and prices identify:
+\begin_inset Formula 
+\[
+\begin{pmatrix}K_{11} & K_{12} & K_{13}\\
+K_{12} & K_{22} & K_{23}\\
+K_{13} & K_{23} & K_{33}
+\end{pmatrix},\text{ and }\quad\begin{pmatrix}t_{11} & t_{12} & t_{13}\\
+t_{21} & t_{22} & t_{23}\\
+t_{31} & t_{32} & t_{33}
+\end{pmatrix}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Each element of matrix 
+\begin_inset Formula $T$
+\end_inset
+
+ and 
+\begin_inset Formula $K$
+\end_inset
+
+ can be rewritten as a non-linear function of the coefficients given by
+ 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:matchingeq"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+ and the definition of matrix 
+\begin_inset Formula $K$
+\end_inset
+
+.
+ This could potentially give us a system of 
+\begin_inset Formula $9+6=15$
+\end_inset
+
+ equations with only 10 unknown parameters.
+ However, the numerical non-identification result shows that this is not
+ the right approach and we need to look further into the structure of these
+ matrices.
+ 
+\begin_inset Formula $K_{11},K_{22},K_{33},K_{12},K_{13},K_{23}$
+\end_inset
+
+ can be expressed as a function of matrix 
+\begin_inset Formula $T$
+\end_inset
+
+ and 
+\begin_inset Formula $\begin{pmatrix}\beta_{11}^{d}-\beta_{11}^{u} & \beta_{12}^{d}-\beta_{12}^{u} & -\beta_{13}^{u}\\
+\beta_{21}^{d}-\beta_{21}^{u} & -\beta_{22}^{u} & 0\\
+-\beta_{31}^{u} & 0 & \beta_{33}^{d}
+\end{pmatrix}$
+\end_inset
+
+ to get
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+K_{11}=2\left(\beta_{11}^{d}-\beta_{11}^{u}\right)t_{11}+2\left(\beta_{12}^{d}-\beta_{12}^{u}\right)t_{21}-2\beta_{13}^{u}t_{31}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align*}
+K_{12}=\left(\beta_{21}^{d}-\beta_{21}^{u}\right)t_{11}-\beta_{22}^{u}t_{21}+\left(\beta_{11}^{d}-\beta_{11}^{u}\right)t_{12}+\left(\beta_{12}^{d}-\beta_{12}^{u}\right)t_{22}-\beta_{13}^{u}t_{32}
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align*}
+K_{13}=-\beta_{31}^{u}t_{11}+\beta_{33}^{d}t_{31}+\left(\beta_{11}^{d}-\beta_{11}^{u}\right)t_{13}+\left(\beta_{12}^{d}-\beta_{12}^{u}\right)t_{23}-\beta_{13}^{u}t_{33}
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+K_{22}=2\left(\beta_{21}^{d}-\beta_{21}^{u}\right)t_{12}-2\beta_{22}^{u}t_{22}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align*}
+K_{23}=-\beta_{31}^{u}t_{12}+\beta_{33}^{d}t_{32}+\left(\beta_{21}^{d}-\beta_{21}^{u}\right)t_{13}-\beta_{22}^{u}t_{23}
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+K_{33}=-2\beta_{31}^{u}t_{13}+2\beta_{33}^{d}t_{33}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Data on matching already identifies 
+\begin_inset Formula $T$
+\end_inset
+
+.
+ The above system of 6 equations has 7 unknowns:
+\begin_inset Formula 
+\[
+\left(\beta_{11}^{d}-\beta_{11}^{u}\right),\left(\beta_{12}^{d}-\beta_{12}^{u}\right),\left(\beta_{21}^{d}-\beta_{21}^{u}\right),\beta_{22}^{u},\beta_{13}^{u},\beta_{31}^{u},\beta_{33}^{d}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We cannot uniquely solve the system of equations for these 7 variables.
+ This is not a proof of non-identification, but might be hint.
+ 
+\end_layout
+
+\begin_layout Standard
+Let us switch to the 
+\series bold
+identified specification
+\series default
+ in 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "subsec:identified_model"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+ which excludes 
+\begin_inset Formula $\beta_{31}^{u}y_{1}\epsilon$
+\end_inset
+
+ from the upstream valuation.
+ The elements of matrix 
+\begin_inset Formula $K$
+\end_inset
+
+ imply the following 6 linear equations: 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+K_{11}=2\left(\beta_{11}^{d}-\beta_{11}^{u}\right)t_{11}+2\left(\beta_{12}^{d}-\beta_{12}^{u}\right)t_{21}-2\beta_{13}^{u}t_{31}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align*}
+K_{12}=\left(\beta_{21}^{d}-\beta_{21}^{u}\right)t_{11}-\beta_{22}^{u}t_{21}+\left(\beta_{11}^{d}-\beta_{11}^{u}\right)t_{12}+\left(\beta_{12}^{d}-\beta_{12}^{u}\right)t_{22}-\beta_{13}^{u}t_{32}
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align*}
+K_{13}=\beta_{33}^{d}t_{31}+\left(\beta_{11}^{d}-\beta_{11}^{u}\right)t_{13}+\left(\beta_{12}^{d}-\beta_{12}^{u}\right)t_{23}-\beta_{13}^{u}t_{33}
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+K_{22}=2\left(\beta_{21}^{d}-\beta_{21}^{u}\right)t_{12}-2\beta_{22}^{u}t_{22}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align*}
+K_{23}=\beta_{33}^{d}t_{32}+\left(\beta_{21}^{d}-\beta_{21}^{u}\right)t_{13}-\beta_{22}^{u}t_{23}
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+K_{33}=2\beta_{33}^{d}t_{33}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Since the elements of 
+\begin_inset Formula $T$
+\end_inset
+
+ are identified, we can uniquely solve the above system of 6 linear equations
+ for 
+\begin_inset Formula 
+\[
+\left(\beta_{11}^{d}-\beta_{11}^{u}\right),\left(\beta_{12}^{d}-\beta_{12}^{u}\right),\left(\beta_{21}^{d}-\beta_{21}^{u}\right),\beta_{22}^{u},\beta_{13}^{u},\beta_{33}^{d}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This already proves that the structural parameters 
+\begin_inset Formula $\beta_{22}^{u},\beta_{13}^{u},\beta_{33}^{d}$
+\end_inset
+
+ are identified.
+ However, this does not separately identify the coefficients of valuation
+ functions, but only their differences.
+ 
+\end_layout
+
+\begin_layout Standard
+The matrix 
+\begin_inset Formula $T$
+\end_inset
+
+ can be written as 
+\begin_inset Formula 
+\begin{align}
+T & =\overbrace{\Sigma_{Y}^{1/2}\left(\Sigma_{Y}^{1/2}A'\Sigma_{X}A\Sigma_{Y}^{1/2}\right)^{-1/2}\Sigma_{Y}^{1/2}}^{H}A'\nonumber \\
+ & =\begin{pmatrix}H_{11} & H_{12} & H_{13}\\
+H_{12} & H_{22} & H_{23}\\
+H_{13} & H_{23} & H_{33}
+\end{pmatrix}\begin{pmatrix}\beta_{11}^{d}+\beta_{11}^{u} & \beta_{21}^{d}+\beta_{21}^{u} & \beta_{13}^{u}\\
+\beta_{12}^{d}+\beta_{12}^{u} & \beta_{22}^{u} & 0\\
+0 & 0 & \beta_{33}^{d}
+\end{pmatrix}=\begin{pmatrix}t_{11} & t_{12} & t_{13}\\
+t_{21} & t_{22} & t_{23}\\
+t_{31} & t_{32} & t_{33}
+\end{pmatrix}.\label{eq:tmatsymmet}
+\end{align}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Equation 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:tmatsymmet"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+ exploits the structure of matrix 
+\begin_inset Formula $T$
+\end_inset
+
+ to express it as the product of a symmetric matrix 
+\begin_inset Formula $H$
+\end_inset
+
+ and the matrix 
+\begin_inset Formula $A$
+\end_inset
+
+ which is the sum of upstream and downstream coefficients.
+ Since 
+\begin_inset Formula $H$
+\end_inset
+
+ is a symmetric matrix, it is only characterized by 6 parameters.
+ Recall, that all 9 elements of matrix 
+\begin_inset Formula $T$
+\end_inset
+
+ are identified from data on matching, and further the three parameters
+ 
+\begin_inset Formula $\beta_{22}^{u},\beta_{13}^{u},\beta_{33}^{d}$
+\end_inset
+
+ are identified from the argument above using the price equation.
+ Equation 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:tmatsymmet"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+ defines a system of 9 equations (not all are linear):
+\begin_inset Formula 
+\begin{align}
+H_{11}\left(\beta_{11}^{u}+\beta_{11}^{d}\right)+H_{12}\left(\beta_{12}^{u}+\beta_{12}^{d}\right) & =t_{11}\nonumber \\
+H_{11}\left(\beta_{21}^{u}+\beta_{21}^{d}\right)+H_{12}\beta_{22}^{u} & =t_{12}\nonumber \\
+H_{11}\beta_{13}^{u}+H_{13}\beta_{33}^{d} & =t_{13}\label{eq:idsystem1}\\
+H_{12}\left(\beta_{11}^{u}+\beta_{11}^{d}\right)+H_{22}\left(\beta_{12}^{u}+\beta_{12}^{d}\right) & =t_{21}\nonumber \\
+H_{12}\left(\beta_{21}^{u}+\beta_{21}^{d}\right)+H_{22}\beta_{22}^{u} & =t_{22}\nonumber \\
+H_{12}\beta_{13}^{u}+H_{23}\beta_{33}^{d} & =t_{23}\label{eq:idsystem2}\\
+H_{13}\left(\beta_{11}^{u}+\beta_{11}^{d}\right)+H_{23}\left(\beta_{12}^{u}+\beta_{12}^{d}\right) & =t_{31}\nonumber \\
+H_{13}\left(\beta_{21}^{u}+\beta_{21}^{d}\right)+H_{23}\beta_{22}^{u} & =t_{32}\nonumber \\
+H_{13}\beta_{13}^{u}+H_{33}\beta_{33}^{d} & =t_{33}\label{eq:idsystem3}
+\end{align}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+There are 9 unknowns in the above equations:
+\begin_inset Formula 
+\[
+H_{11},H_{12},H_{13},H_{22},H_{23},H_{33},\left(\beta_{21}^{u}+\beta_{21}^{d}\right),\left(\beta_{12}^{u}+\beta_{12}^{d}\right),\left(\beta_{12}^{d}+\beta_{12}^{u}\right).
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Under conditions that I have to further investigate, we can solve the system
+ of 9 equations for the 9 unknowns listed above.
+ 
+\end_layout
+
+\begin_layout Standard
+Collecting the two intermediate identification arguments above using the
+ price equation and the matching equation, we have identified
+\begin_inset Formula 
+\[
+\left(\beta_{21}^{u}+\beta_{21}^{d}\right),\left(\beta_{12}^{u}+\beta_{12}^{d}\right),\left(\beta_{12}^{d}+\beta_{12}^{u}\right),\left(\beta_{11}^{d}-\beta_{11}^{u}\right),\left(\beta_{12}^{d}-\beta_{12}^{u}\right),\left(\beta_{21}^{d}-\beta_{21}^{u}\right),\beta_{22}^{u},\beta_{13}^{u},\beta_{33}^{d}.
+\]
+
+\end_inset
+
+ Since we have identified 
+\begin_inset Formula $\left(\beta_{21}^{u}+\beta_{21}^{d}\right),\left(\beta_{21}^{d}-\beta_{21}^{u}\right)$
+\end_inset
+
+, we can identify 
+\begin_inset Formula $\beta_{21}^{u},\beta_{21}^{d}$
+\end_inset
+
+ separately.
+ Similarly, we can identify 
+\begin_inset Formula $\beta_{12}^{u},\beta_{12}^{d},\beta_{11}^{u},\beta_{11}^{d}$
+\end_inset
+
+ separately.
+ This completes the identification of all 9 parameters of the specification
+ in 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "subsec:identified_model"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Section
+Identification of Matching Matrix 
+\begin_inset Formula $T$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The equilibrium matching is linear in types, i.e.
+ 
+\begin_inset Formula 
+\begin{align*}
+y_{1} & =t_{11}x_{1}+t_{12}x_{2}+t_{13}\epsilon,\\
+y_{2} & =t_{21}x_{1}+t_{22}x_{2}+t_{23}\epsilon,\\
+\eta & =t_{31}x_{1}+t_{32}x_{2}+t_{33}\epsilon.
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Since 
+\begin_inset Formula $x_{1},x_{2}\perp\epsilon$
+\end_inset
+
+, regressing 
+\begin_inset Formula $y_{1}$
+\end_inset
+
+ on 
+\begin_inset Formula $x_{1}$
+\end_inset
+
+ and 
+\begin_inset Formula $x_{2}$
+\end_inset
+
+ identifies 
+\begin_inset Formula $t_{11}$
+\end_inset
+
+, 
+\begin_inset Formula $t_{12}$
+\end_inset
+
+ as the coefficients, and 
+\begin_inset Formula $|t_{13}|$
+\end_inset
+
+ as the standard deviation of the residuals.
+ Similarly, regressing 
+\begin_inset Formula $y_{2}$
+\end_inset
+
+ on 
+\begin_inset Formula $x_{1}$
+\end_inset
+
+ and 
+\begin_inset Formula $x_{2}$
+\end_inset
+
+ identifies 
+\begin_inset Formula $t_{21}$
+\end_inset
+
+, 
+\begin_inset Formula $t_{22}$
+\end_inset
+
+ as coefficients, and 
+\begin_inset Formula $|t_{23}|$
+\end_inset
+
+ as the standard deviation of the residuals.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align*}
+Cov\left(y_{1},y_{2}\right) & =Cov\left(\begin{pmatrix}t_{11}\\
+t_{12}\\
+t_{13}
+\end{pmatrix}^{'}\begin{pmatrix}x_{1}\\
+x_{2}\\
+\epsilon
+\end{pmatrix},\begin{pmatrix}t_{21}\\
+t_{22}\\
+t_{23}
+\end{pmatrix}^{'}\begin{pmatrix}x_{1}\\
+x_{2}\\
+\epsilon
+\end{pmatrix}\right)\\
+ & =Cov\left(t_{11}x_{1}+t_{12}x_{2}+t_{13}\epsilon,t_{21}x_{1}+t_{22}x_{2}+t_{23}\epsilon\right)\\
+ & =t_{11}t_{21}Var\left(x_{1}\right)+t_{11}t_{22}Cov\left(x_{1},x_{2}\right)+t_{11}t_{23}Cov\left(x_{1},\epsilon\right)+\\
+ & +t_{12}t_{21}Cov\left(x_{1},x_{2}\right)+t_{12}t_{22}Var\left(x_{2}\right)+t_{12}t_{23}Cov\left(x_{2},\epsilon\right)+\\
+ & +t_{13}t_{21}Cov\left(\epsilon,x_{1}\right)+t_{13}t_{22}Cov\left(\epsilon,x_{2}\right)+t_{13}t_{23}Var\left(\epsilon\right)=\\
+ & =t_{11}t_{21}\sigma_{x_{1}}^{2}+\left(t_{11}t_{22}+t_{12}t_{21}\right)\sigma_{x_{1}x_{2}}+t_{12}t_{22}\sigma_{x_{2}}^{2}+\bm{t_{13}t_{23}}=0.
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Thus, 
+\begin_inset Formula 
+\[
+t_{13}t_{23}=-\left(t_{11}t_{21}\sigma_{x_{1}}^{2}+\left(t_{11}t_{22}+t_{12}t_{21}\right)\sigma_{x_{1}x_{2}}+t_{12}t_{22}\sigma_{x_{2}}^{2}\right).
+\]
+
+\end_inset
+
+Since all the parameter values on the right hand side are identified, we
+ can identify the sign of 
+\begin_inset Formula $t_{13}t_{23}$
+\end_inset
+
+ in addition to the values of 
+\begin_inset Formula $\left|t_{13}\right|,\left|t_{23}\right|$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+Further,
+\begin_inset Formula 
+\begin{align*}
+Var\left(\eta\right) & =Var\left(t_{31}x_{1}+t_{32}x_{2}+t_{33}\epsilon\right)\\
+ & =\bm{t_{31}^{2}}\sigma_{x_{1}}^{2}+\bm{t_{32}^{2}}\sigma_{x_{2}}^{2}+\bm{t_{33}^{2}}=1.
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+And, 
+\begin_inset Formula 
+\[
+Cov\left(y_{j},\eta\right)=Cov\left(\begin{pmatrix}t_{j1}\\
+t_{j2}\\
+t_{j3}
+\end{pmatrix}^{'}\begin{pmatrix}x_{1}\\
+x_{2}\\
+\epsilon
+\end{pmatrix},\begin{pmatrix}t_{31}\\
+t_{32}\\
+t_{33}
+\end{pmatrix}^{'}\begin{pmatrix}x_{1}\\
+x_{2}\\
+\epsilon
+\end{pmatrix}\right)=0
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Then, (the bold ones are unknowns in the last line).
+ 
+\begin_inset Formula 
+\begin{align*}
+Cov\left(t_{11}x_{1}+t_{12}x_{2}+t_{13}\epsilon,t_{31}x_{1}+t_{32}x_{2}+t_{33}\epsilon\right)=\\
+=t_{11}t_{31}Var\left(x_{1}\right)+t_{11}t_{32}Cov\left(x_{1},x_{2}\right)+t_{11}t_{33}Cov\left(x_{1},\epsilon\right) & +\\
++t_{12}t_{31}Cov\left(x_{1},x_{2}\right)+t_{12}t_{32}Var\left(x_{2}\right)+t_{12}t_{33}Cov\left(x_{2},\epsilon\right) & +\\
++t_{13}t_{31}Cov\left(\epsilon,x_{1}\right)+t_{13}t_{32}Cov\left(\epsilon,x_{2}\right)+t_{13}t_{33}Var\left(\epsilon\right)=\\
+=t_{11}\bm{t_{31}}\sigma_{x_{1}}^{2}+\left(t_{11}\bm{t_{32}}+t_{12}\bm{t_{31}}\right)\sigma_{x_{1}x_{2}}+t_{12}\bm{t_{32}}\sigma_{x_{2}}^{2}+t_{13}\bm{t_{33}}= & 0.
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Now, consider 
+\begin_inset Formula $Cov\left(y_{2},\eta\right)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align*}
+Cov\left(t_{21}x_{1}+t_{22}x_{2}+t_{23}\epsilon,t_{31}x_{1}+t_{32}x_{2}+t_{33}\epsilon\right)=\\
+=t_{21}t_{31}Var\left(x_{1}\right)+t_{21}t_{32}Cov\left(x_{1},x_{2}\right)+t_{21}t_{33}Cov\left(x_{2},\epsilon\right) & +\\
++t_{22}t_{31}Cov\left(x_{1},x_{2}\right)+t_{22}t_{32}Var\left(x_{2}\right)+t_{22}t_{33}Cov\left(x_{2},\epsilon\right) & +\\
++t_{33}t_{31}Cov\left(\epsilon,x_{1}\right)+t_{33}t_{32}Cov\left(\epsilon,x_{2}\right)+t_{33}t_{33}Var\left(\epsilon\right)=\\
+=t_{21}\bm{t_{31}}\sigma_{x_{1}}^{2}+\left(t_{21}\bm{t_{32}}+t_{22}\bm{t_{31}}\right)\sigma_{x_{1}x_{2}}+t_{22}\bm{t_{32}}\sigma_{x_{2}}^{2}+t_{23}\bm{t_{33}}= & 0.
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Collecting the three equations we have 
+\begin_inset Formula 
+\[
+\begin{cases}
+\bm{t_{31}^{2}}\sigma_{x_{1}}^{2}+\bm{t_{32}^{2}}\sigma_{x_{2}}^{2}+\bm{t_{33}^{2}}=1\\
+t_{11}\bm{t_{31}}\sigma_{x_{1}}^{2}+\left(t_{11}\bm{t_{32}}+t_{12}\bm{t_{31}}\right)\sigma_{x_{1}x_{2}}+t_{12}\bm{t_{32}}\sigma_{x_{2}}^{2}+t_{13}\bm{t_{33}}=0\\
+t_{21}\bm{t_{31}}\sigma_{x_{1}}^{2}+\left(t_{21}\bm{t_{32}}+t_{22}\bm{t_{31}}\right)\sigma_{x_{1}x_{2}}+t_{22}\bm{t_{32}}\sigma_{x_{2}}^{2}+t_{23}\bm{t_{33}}=0
+\end{cases}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Let us assume 
+\begin_inset Formula $t_{33}\geq0$
+\end_inset
+
+, then
+\begin_inset Formula 
+\begin{equation}
+t_{33}=\sqrt{1-t_{31}^{2}\sigma_{x_{1}}^{2}-t_{32}^{2}\sigma_{x_{2}}^{2}}.\label{eq:t33solved}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Then, we end up with a system of two equations (still non-linear) with two
+ unknowns
+\begin_inset Formula 
+\begin{equation}
+\begin{cases}
+t_{11}\bm{t_{31}}\sigma_{x_{1}}^{2}+\left(t_{11}\bm{t_{32}}+t_{12}\bm{t_{31}}\right)\sigma_{x_{1}x_{2}}+t_{12}\bm{t_{32}}\sigma_{x_{2}}^{2}+t_{13}\sqrt{1-\bm{t_{31}^{2}}\sigma_{x_{1}}^{2}-\bm{t_{32}^{2}}\sigma_{x_{2}}^{2}}=0,\\
+t_{21}\bm{t_{31}}\sigma_{x_{1}}^{2}+\left(t_{21}\bm{t_{32}}+t_{22}\bm{t_{31}}\right)\sigma_{x_{1}x_{2}}+t_{22}\bm{t_{32}}\sigma_{x_{2}}^{2}+t_{23}\sqrt{1-\bm{t_{31}^{2}}\sigma_{x_{1}}^{2}-\bm{t_{32}^{2}}\sigma_{x_{2}}^{2}}=0.
+\end{cases}\label{eq:tmatsystemeq}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We can solve the system of equations above for the two unknowns.
+ 
+\end_layout
+
+\begin_layout Standard
+For the parameterization which is frequently used in this document, i.e.
+ Specification 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "subsec:identified_model"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+,
+\begin_inset Formula 
+\[
+\begin{pmatrix}t_{11} & t_{12} & t_{13}\\
+t_{21} & t_{22} & t_{23}\\
+t_{31} & t_{32} & t_{33}
+\end{pmatrix}\approx\begin{pmatrix}.8 & .4 & .24\\
+-.1 & .96 & -.13\\
+t_{31} & t_{32} & t_{33}
+\end{pmatrix}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We can plot the two implicit functions in 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:tmatsymmet"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+ to get a better intuition of uniqueness.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename t32-t31.png
+	width 40col%
+
+\end_inset
+
+
+\begin_inset Graphics
+	filename t32-31-neg.png
+	width 40col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:systemsolutionsmatching"
+
+\end_inset
+
+Plot of the equations in 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:tmatsymmet"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+ in 
+\begin_inset Formula $t_{31}-t_{32}$
+\end_inset
+
+ space for the specific parameterization in this document.
+ 
+\begin_inset Formula $t_{33}$
+\end_inset
+
+ is then calculated via 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:t33solved"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+.
+ Since only the sign of 
+\begin_inset Formula $t_{13},t_{23}$
+\end_inset
+
+ are not individually identified, the system of equations is solved separately
+ assuming the sign of 
+\begin_inset Formula $t_{13}\cdot t_{23}$
+\end_inset
+
+ being positive or negative.
+ The solution to the system simply changes sign with the sign of 
+\begin_inset Formula $t_{13}\cdot t_{23}$
+\end_inset
+
+.
+ The intersection in the left plot is at 
+\begin_inset Formula $\left(-0.11,0.82\right)$
+\end_inset
+
+ and in the right plot is at 
+\begin_inset Formula $\left(0.11,-0.82\right)$
+\end_inset
+
+.
+ 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+In summary, The signs of 
+\begin_inset Formula $t_{13},t_{23}$
+\end_inset
+
+ are not separately identified, however, the sign of 
+\begin_inset Formula $t_{13}\cdot t_{23}$
+\end_inset
+
+ is identified.
+ The sign of 
+\begin_inset Formula $t_{33}$
+\end_inset
+
+ is not identified.
+ 
+\end_layout
+
+\begin_layout Section
+Scratch Notes 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align*}
+\sigma_{x_{1}}^{4}t_{11}^{2}t_{31}^{2}+2\sigma_{x_{1}}^{2}\sigma_{x_{1}x_{2}}t_{11}t_{12}t_{31}^{2}+\sigma_{x_{1}x_{2}}^{2}t_{12}^{2}t_{31}^{2}+2\sigma_{x_{1}}^{2}\sigma_{x_{1}x_{2}}t_{11}^{2}t_{31}t_{32}+2\sigma_{x_{1}x_{2}}^{2}t_{11}t_{12}t_{31}t_{32}+\\
++2\sigma_{x_{1}}\sigma_{x_{2}}t_{11}t_{12}t_{31}t_{32}+2\sigma_{x_{1}x_{2}}\sigma_{x_{2}}^{2}t_{12}^{2}t_{31}t_{32}+\sigma_{x_{1}x_{2}}^{2}t_{11}^{2}t_{32}^{2}+2\sigma_{x_{1}x_{2}}\sigma_{x_{2}}^{2}t_{11}t_{12}t_{32}^{2}+\\
++\sigma_{x_{2}}^{4}t_{12}^{2}t_{32}^{2}=\\
+=t_{13}-\sigma_{x_{1}}t_{13}t_{31}^{2}-\sigma_{x_{2}}^{2}t_{13}t_{32}^{2}.
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\end_body
+\end_document
