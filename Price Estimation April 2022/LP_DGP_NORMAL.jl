@@ -59,7 +59,9 @@ end
 
 @benchmark gt(data) setup=(data=rand(1:30))
 
-@benchmark hungarian(data) setup=(data=rand(500,500))
+@benchmark hungarian(data) setup=(data=rand(40,40))
+
+@benchmark find_best_assignment(data) setup=(data=rand(40,40))
 
 
 @time
@@ -69,13 +71,12 @@ end
 
 
 
-@benchmark find_best_assignment(data) setup=(data=rand(500,500))
 sol = find_best_assignment(rand(3,3))
 
+sol[1]
 
 
-
-
+sol[4]
 
 
 
@@ -83,17 +84,25 @@ sol = find_best_assignment(rand(3,3))
 sol
 
 
-c = rand(1:10, 3,3)
+c = rand(1:22, 3,3)
 
 
 c=-c
 
+c
 
 
 
-sol = find_best_assignment(c)
 
-sol[1]
+
+sol2 = find_best_assignment(c, true)
+
+sol[4]
+
+
+
+
+
 
 ui = sol[3]
 
@@ -290,3 +299,4 @@ sigdown = diagm([.5,3,1])
 
 
 @benchmark sim_data_LP(bup, bdown, sigup, sigdown, 500, 2)
+ui
