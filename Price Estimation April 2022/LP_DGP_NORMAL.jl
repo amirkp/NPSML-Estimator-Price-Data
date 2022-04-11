@@ -1,5 +1,5 @@
-using Gurobi
-using JuMP
+# using Gurobi
+# using JuMP
 using Distributions
 using Random
 using LinearAlgebra
@@ -9,102 +9,94 @@ using BenchmarkTools
 # model = JuMP.direct_model(Gurobi.Optimizer());
 
 n_firms = 500
-model = Model(Gurobi.Optimizer)
-set_optimizer_attribute(model, "Presolve", -1)
-set_optimizer_attribute(model, "OutputFlag", 1)
+# model = Model(Gurobi.Optimizer)
+# set_optimizer_attribute(model, "Presolve", -1)
+# set_optimizer_attribute(model, "OutputFlag", 1)
+#
+#
+# MOI.set(model, MOI.Silent(), true)
+#
+# @variable(model, 0<= matching_mat[i=1:n_firms,j=1:n_firms]<=1);
+# @constraint(model ,conD[i=1:n_firms], sum(matching_mat[:,i])==1);
+# @constraint(model ,conU[i=1:n_firms], sum(matching_mat[i,:])==1);
+#
+#
+# # Random.seed!(1234+i)
+#
+#
+# β_up = [1. 1.5 -1;
+#        .5 2.5 0;
+#       0 0  0 ]
+# β_down = [2.5 -2 0;
+#         1  0 0;
+#         0 0 .5]
+#
+# Σ_up = diagm([2,1,1.])
+# Σ_down = diagm([.5,3,1])
+#
+# up_data = zeros(3, n_firms)
+# up_data[1,:] = rand(Normal(0,Σ_up[1,1]), n_firms)
+# up_data[2,:] = rand(Normal(0,Σ_up[2,2]), n_firms)
+# up_data[3,:] = rand(Normal(0,Σ_up[3,3]), n_firms)
+#
+# down_data = zeros(3, n_firms)
+# down_data[1,:] = rand(Normal(0, Σ_down[1,1]), n_firms)
+# down_data[2,:] = rand(Normal(0, Σ_down[2,2]), n_firms)
+# down_data[3,:] = rand(Normal(0, Σ_down[3,3]), n_firms)
+#
+#
+# A_mat = β_up + β_down
+# C = -1*Transpose(up_data)*A_mat*down_data #pairwise surplus
+#
+# function gt(i)
+#     @objective(model,Min, sum(matching_mat.*(randn(500,500))) )
+#     optimize!(model)
+# end
 
-
-MOI.set(model, MOI.Silent(), true)
-
-@variable(model, 0<= matching_mat[i=1:n_firms,j=1:n_firms]<=1);
-@constraint(model ,conD[i=1:n_firms], sum(matching_mat[:,i])==1);
-@constraint(model ,conU[i=1:n_firms], sum(matching_mat[i,:])==1);
-
-
-
-
-
-# Random.seed!(1234+i)
-
-
-β_up = [1. 1.5 -1;
-       .5 2.5 0;
-      0 0  0 ]
-β_down = [2.5 -2 0;
-        1  0 0;
-        0 0 .5]
-
-Σ_up = diagm([2,1,1.])
-Σ_down = diagm([.5,3,1])
-
-up_data = zeros(3, n_firms)
-up_data[1,:] = rand(Normal(0,Σ_up[1,1]), n_firms)
-up_data[2,:] = rand(Normal(0,Σ_up[2,2]), n_firms)
-up_data[3,:] = rand(Normal(0,Σ_up[3,3]), n_firms)
-
-down_data = zeros(3, n_firms)
-down_data[1,:] = rand(Normal(0, Σ_down[1,1]), n_firms)
-down_data[2,:] = rand(Normal(0, Σ_down[2,2]), n_firms)
-down_data[3,:] = rand(Normal(0, Σ_down[3,3]), n_firms)
-
-
-A_mat = β_up + β_down
-C = -1*Transpose(up_data)*A_mat*down_data #pairwise surplus
-
-function gt(i)
-    @objective(model,Min, sum(matching_mat.*(randn(500,500))) )
-    optimize!(model)
-end
-
-
-@benchmark gt(data) setup=(data=rand(1:30))
-
-@benchmark hungarian(data) setup=(data=rand(40,40))
-
-@benchmark find_best_assignment(data) setup=(data=rand(40,40))
-
-
-@time
-
-
-
-
-
-
-sol = find_best_assignment(rand(3,3))
-
-sol[1]
-
-
-sol[4]
-
-
-
-
-sol
-
+#
+# @benchmark gt(data) setup=(data=rand(1:30))
+#
+# @benchmark hungarian(data) setup=(data=rand(500,500))
+#
+# @benchmark find_best_assignment(data) setup=(data=rand(500,500))
+#
+#
+# @time
+#
+#
+#
+#
+#
+#
+# sol = find_best_assignment(rand(3,3))
+#
+# sol[1]
+#
+#
+# sol[4]
+#
+#
+#
+#
+# sol
+#
 
 c = rand(1:22, 3,3)
 
 
-c=-c
-
-c
 
 
 
-
-
-sol2 = find_best_assignment(c, true)
+sol = find_best_assignment(c, true)
 
 sol[4]
 
+vj
 
 
 
 
-
-ui = sol[3]
+ui = sol[4]
 
 
 
@@ -113,7 +105,7 @@ ui= -ui
 
 
 
-vj= sol[2]
+vj= sol[3]
 
 
 
@@ -124,7 +116,7 @@ vj=-vj
 
 (2,5) = 6       0 + 6  = 6
 
-
+ui+vj
 
 sum(ui + vj)
 
