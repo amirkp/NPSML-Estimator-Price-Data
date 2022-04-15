@@ -1,78 +1,80 @@
 
-using Optim
-using LinearAlgebra
-using Random
-using Distributions
-using BlackBoxOptim
-using Plots
-using Assignment
-using BenchmarkTools
-using ForwardDiff
-# using JuMP
-# using Gurobi
+
+using Distributed
+addprocs(23)
+@everywhere begin
+    using LinearAlgebra
+    using Random
+    using Distributions
+    using BlackBoxOptim
+    using Plots
+    using Assignment
+    using BenchmarkTools
+
 # @everywhere include("data_sim_seed.jl")
 # include("data_sim_like.jl")
-include("data_sim_like_2d_2d_diff.jl")
-include("data_sim_like_2d_2d_match_only.jl")
+    # include("data_sim_like_2d_2d_diff.jl")
+    # include("data_sim_like_2d_2d_match_only.jl")
 
-include("JV_DGP-Normal.jl")
-# include("LP_DGP.jl")
-n_firms=100
-
-# @everywhere function replicate_byseed(n_rep)
-
-bup = [1. 1.5 -1;
-       .5 2.5 0;
-      0 0  0 ]
-bdown = [2.5 -2 0;
-        1  0 0;
-        0 0 .5]
-B= bup+bdown
+    include("JV_DGP-Normal.jl")
+    # include("LP_DGP.jl")
+end
+@everywhere begin
+        n_firms=500
 
 
-# sig_up  = rand(3,2)
-# sig_down= rand(3,2)
+    # @everywhere function replicate_byseed(n_rep)
+
+        bup = [-1. 1.5 -1;
+               .5 2.5 0;
+              0 0  0 ]
+        bdown = [2.5 -2 0;
+                1  0 0;
+                0 0 .5]
+        B= bup+bdown
 
 
-
-# sig_up[:,1] .= 0
-# sig_down[:,1] .= 0
-
-# sig_up
+    # sig_up  = rand(3,2)
+    # sig_down= rand(3,2)
 
 
 
-sig_up = [0 2.;
-            0 1.;
-            0 1.]
+    # sig_up[:,1] .= 0
+    # sig_down[:,1] .= 0
 
-# sig_up
-
-
-sig_down = [0 0.5;
-            0 3.;
-            0 1.]
-
-
-# sig_down
+    # sig_up
 
 
 
+        sig_up = [0 2.;
+                    0 1.;
+                    0 1.]
+
+        # sig_up
+
+
+        sig_down = [0 0.5;
+                    0 3.;
+                    0 1.]
+
+
+    # sig_down
 
 
 
-# up_data, down_data, price_data_cf, tmat =
-#     sim_data_like( -1, bup, bdown, [2, 1., 1.], [.5, 3, 1.], n_firms, 20, 2.5)
 
-# up_data, down_data, price, u_profit, d_profit = sim_data_JV(bup, bdown, sig_up, sig_down, n_firms,20)
-up_data, down_data, price_data_cf = sim_data_JV_Normal(bup, bdown, sig_up, sig_down, n_firms,20, false, 0, 0)
 
-# @benchmark up_data, down_data, price_data_cf, tmat =
-    # sim_data_like( -1, bup, bdown, [2, 1., 1.], [.5, 3, 1.], n_firms, 20, 2.5)
-mu_price = mean(price_data_cf)
 
-# tmat
-tpar = [1, 1.5, .5, 2.5, 2.5, -2, 1, -1, .5]
+    # up_data, down_data, price_data_cf, tmat =
+    #     sim_data_like( -1, bup, bdown, [2, 1., 1.], [.5, 3, 1.], n_firms, 20, 2.5)
+
+    # up_data, down_data, price, u_profit, d_profit = sim_data_JV(bup, bdown, sig_up, sig_down, n_firms,20)
+    up_data, down_data, price_data_cf = sim_data_JV_Normal(bup, bdown, sig_up, sig_down, n_firms,20, false, 0, 0)
+
+    # @benchmark up_data, down_data, price_data_cf, tmat =
+        # sim_data_like( -1, bup, bdown, [2, 1., 1.], [.5, 3, 1.], n_firms, 20, 2.5)
+    mu_price = mean(price_data_cf)
+end
 
 
 
@@ -109,7 +111,7 @@ function loglikepr(b)
 
     solve_draw =  x->sim_data_JV_Normal(bup, bdown , sig_up, sig_down, n_firms, 1234+x, true, up_data[1:2,:], down_data[1:2,:])
      # x->sim_data_like(up_data[1:2,:],bup, bdown , [2, 1., 1], [.5, 3, 1], n_firms, 1234+x, 2.5)
-    sim_dat = map(solve_draw, 1:n_sim)
+    sim_dat = pmap(solve_draw, 1:n_sim)
     ll=0.0
     h=[0.1, 0.2, 1.5]
 
@@ -136,12 +138,14 @@ end
 @benchmark loglikepr(tpar)
 loglikepr(tpar)
 
-g = x-> ForwardDiff.gradient(loglikepr,x);
-g(tpar)
-
 res_1 = Optim.optimize(loglikepr, tmp)
 res_1 = Optim.optimize(loglikepr,tpar )
 
+
+
+@everywhere using ForwardDiff
+@everywhere g = x-> ForwardDiff.gradient(loglikepr,x);
+g(tpar)
 
 
 # res_1 = Optim.optimize(loglikepr,randn(10) )
