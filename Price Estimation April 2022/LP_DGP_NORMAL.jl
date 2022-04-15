@@ -6,7 +6,6 @@ vj
 
 
 
-
 ui = sol[4]
 
 
@@ -203,3 +202,42 @@ sigdown = diagm([.5,3,1])
 
 @benchmark sim_data_LP(bup, bdown, sigup, sigdown, 500, 2)
 ui
+
+
+
+
+using Assignment
+dim = 5000
+dd= abs.(randn( dim, dim ))*10000
+
+
+
+
+
+
+
+sol,u, v= find_best_assignment(-dd)
+
+
+error = 0.
+count =0
+for i = 1:dim
+    for j =1:dim
+        if u[i] +v[j]  < dd[i,j]
+            error += u[i] +v[j]  - dd[i,j]
+            count +=1
+
+        end
+
+    end
+end
+
+
+
+error
+
+count
+u
+
+@benchmark find_best_assignment(rand(500,500))
+rand()

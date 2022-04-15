@@ -1,18 +1,22 @@
 function sim_data_LP(β_up, β_down, Σ_up, Σ_down, n_firms,i)
-    up_data = zeros(2, n_firms)
+    up_data = zeros(3, n_firms)
     Random.seed!(1234+i)
     up_data[1,:] = rand(LogNormal(Σ_up[1,1], Σ_up[1,2]), n_firms)
     up_data[2,:] = rand(LogNormal(Σ_up[2,1], Σ_up[2,2]), n_firms)
+    up_data[3,:] = rand(LogNormal(Σ_up[3,1], Σ_up[3,2]), n_firms)
 
-    down_data = zeros(3, n_firms)
+
+    down_data = Array{Float64, 2}(undef, 3, n_firms)
     down_data[1,:] = rand(LogNormal(Σ_down[1,1], Σ_down[1,2]), n_firms)
     down_data[2,:] = rand(LogNormal(Σ_down[2,1], Σ_down[2,2]), n_firms)
+    down_data[3,:] = rand(LogNormal(Σ_down[3,1], Σ_down[3,2]), n_firms)
+    #
 
     A_mat = β_up + β_down
     C = -1*Transpose(up_data)*A_mat*down_data #pairwise surplus
 
-    model = Model(optimizer_with_attributes(Gurobi.Optimizer, "Threads" => 1));
-    # MOI.set(model, MOI.Silent(), true)
+    model = Model(optimizer_with_attributes(Gurobi.Optimizer));
+    MOI.set(model, MOI.Silent(), true)
     @variable(model, 0<= matching_mat[i=1:n_firms,j=1:n_firms]<=1);
     @constraint(model ,conD[i=1:n_firms], sum(matching_mat[:,i])==1);
     @constraint(model ,conU[i=1:n_firms], sum(matching_mat[i,:])==1);
