@@ -8,6 +8,7 @@ using Plots
 using Assignment
 using BenchmarkTools
 using ForwardDiff
+using OptimalTransport
 # using JuMP
 # using Gurobi
 # @everywhere include("data_sim_seed.jl")
@@ -17,7 +18,8 @@ include("data_sim_like_2d_2d_match_only.jl")
 
 include("JV_DGP-Normal.jl")
 # include("LP_DGP.jl")
-n_firms=100
+n_firms=500
+
 
 # @everywhere function replicate_byseed(n_rep)
 
@@ -75,14 +77,14 @@ mu_price = mean(price_data_cf)
 tpar = [1, 1.5, .5, 2.5, 2.5, -2, 1, -1, .5]
 
 
-
 ########################
 ##################
 #### MAIN LIKELIHOOD FUNCTION
 #############
 ######################
 ###################
-function loglikepr(b)
+# x::AbstractVector{T}) where T
+function loglikepr(b::AbstractVector{T}) where T
     n_sim=100
 
     bup = [
@@ -129,15 +131,38 @@ function loglikepr(b)
         end
         ll+=log(like/(n_sim*h[1]*h[2]*h[3]))
     end
-    println("parameter: ", round.(b, digits=3), " function value: ", -ll/n_firms)
+    println("parameter: ", b , " function value: ", -ll/n_firms)
+    # round.(b, digits=3)
     return -ll/n_firms
 end
 
-@benchmark loglikepr(tpar)
+# @benchmark loglikepr(tpar)
 loglikepr(tpar)
 
 g = x-> ForwardDiff.gradient(loglikepr,x);
-g(tpar)
+optimize(loglikepr, rand(9), LBFGS())
+
+
+g(rand(9))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+toplot = x-> loglikepr(vcat(x,tpar[2:end]))
+plot(toplot, 0,4)
 
 res_1 = Optim.optimize(loglikepr, tmp)
 res_1 = Optim.optimize(loglikepr,tpar )

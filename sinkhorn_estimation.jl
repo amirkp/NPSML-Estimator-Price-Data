@@ -1,5 +1,5 @@
 using Distributed
-# addprocs(4)
+addprocs(4)
 using Optim
 using BenchmarkTools
 using Plots
@@ -46,7 +46,7 @@ end
         #     gamma = getK1(C, alpha, beta, eps, mu, nu).*(u.*v')
         #     err_mu = norm(gamma*ones(size(nu)) - mu, Inf)
         #     err_nu = norm(gamma'*ones(size(mu)) - nu, Inf)
-        #     # if verbose;
+        #     # if verbose; 
         #     # println(string("Iteration ", i, ", err = ", 0.5*(err_mu + err_nu))); end
         #     if 0.5*(err_mu + err_nu) < tol
         #         break

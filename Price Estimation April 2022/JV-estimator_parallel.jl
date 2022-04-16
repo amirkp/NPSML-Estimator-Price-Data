@@ -2,6 +2,7 @@
 
 using Distributed
 addprocs(23)
+@everywhere using Optim
 @everywhere begin
     using LinearAlgebra
     using Random
@@ -20,12 +21,12 @@ addprocs(23)
     # include("LP_DGP.jl")
 end
 @everywhere begin
-        n_firms=500
+        n_firms=200
 
 
     # @everywhere function replicate_byseed(n_rep)
 
-        bup = [-1. 1.5 -1;
+        bup = [1. 1.5 -1;
                .5 2.5 0;
               0 0  0 ]
         bdown = [2.5 -2 0;
@@ -85,7 +86,7 @@ end
 ######################
 ###################
 function loglikepr(b)
-    n_sim=100
+    n_sim=300
 
     bup = [
         vcat(b[1:2],b[8])';
@@ -113,7 +114,7 @@ function loglikepr(b)
      # x->sim_data_like(up_data[1:2,:],bup, bdown , [2, 1., 1], [.5, 3, 1], n_firms, 1234+x, 2.5)
     sim_dat = pmap(solve_draw, 1:n_sim)
     ll=0.0
-    h=[0.1, 0.2, 1.5]
+    h=[0.1, 0.2, 0.4]
 
     for j=1:n_sim
         pconst = mean(sim_dat[j][3])-mu_price
@@ -135,17 +136,139 @@ function loglikepr(b)
     return -ll/n_firms
 end
 
-@benchmark loglikepr(tpar)
+
+
+tpar = [1, 1.5, .5, 2.5, 2.5, -2, 1, -1, .5]
+
+# @benchmark loglikepr(tpar)
 loglikepr(tpar)
 
-res_1 = Optim.optimize(loglikepr, tmp)
+# res_1 = Optim.optimize(loglikepr, tmp)
 res_1 = Optim.optimize(loglikepr,tpar )
 
+res_2 = Optim.optimize(loglikepr,  [-1, 1.5, .5, 2.5, 2.5, -2, 1, -1, .5])
 
 
-@everywhere using ForwardDiff
-@everywhere g = x-> ForwardDiff.gradient(loglikepr,x);
-g(tpar)
+
+loglike_3p = x-> loglikepr(vcat(x,tpar[4:end]))
+loglike_3p([1.,1.5,.5])
+res_1 = Optim.optimize(loglike_3p,rand(3) )
+
+res_global = bboptimize(loglike_3p; SearchRange = (-3.,3.), Method= :separable_nes, NumDimensions = 3, MaxTime = 80000.0)
+# N=100, twice band: parameter: [1.884, 1.361, 0.362, 2.5, 2.5, -2.0, 1.0, -1.0, 0.5] function value: 1.7403883383530125
+# N=200, twice band: parameter: [1.382, 1.49, 0.566, 2.5, 2.5, -2.0, 1.0, -1.0, 0.5] function value: 1.7262823845855166
+# N=200, half  band: parameter: [1.234, 1.526, 0.504, 2.5, 2.5, -2.0, 1.0, -1.0, 0.5] function value: 0.5373897977220483
+# N=300, half  band: parameter: [1.267, 1.491, 0.548, 2.5, 2.5, -2.0, 1.0, -1.0, 0.5] function value: 0.52157590903904
+
+
+
+
+# Friday April 15, 2022
+# n=500 nsim=100 [-0.463, 1.423, 0.611, 2.675, 2.964, -1.978, 1.197, -0.919, 0.609] function value: 1.0317245476042256
+# n=100 nsim =100 parameter: [-0.401, 1.452, 0.315, 2.715, 1.854, -1.988, 1.511, -0.655, 0.971] function value: 0.34560233205579133
+# n=100 nsim =200 parameter: parameter: [-0.919, 1.514, 1.003, 2.552, 0.773, -1.855, 1.183, 0.008, 1.37] function value: -0.31998859383319567
+# n=100 nsim =300 parameter: [-0.858, 1.549, 0.957, 2.643, 0.678, -1.859, 1.714, -0.007, 2.073] function value: -0.3589305082145246
+#
+
+
+#
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+stop
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#
+# @everywhere using ForwardDiff
+# @everywhere g = x-> ForwardDiff.gradient(loglikepr,x);
+# g(tpar)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # res_1 = Optim.optimize(loglikepr,randn(10) )
