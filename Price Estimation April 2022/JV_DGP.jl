@@ -1,15 +1,30 @@
-function sim_data_JV(β_up, β_down, Σ_up, Σ_down, n_firms,i)
-    up_data = Array{Float64, 2}(undef, 3, n_firms)
-    Random.seed!(1234+i)
-    up_data[1,:] = rand(LogNormal(Σ_up[1,1], Σ_up[1,2]), n_firms)
-    up_data[2,:] = rand(LogNormal(Σ_up[2,1], Σ_up[2,2]), n_firms)
-    up_data[3,:] = rand(LogNormal(Σ_up[3,1], Σ_up[3,2]), n_firms)
+#LOG NORMAL DGP
+function sim_data_JV(β_up, β_down, Σ_up, Σ_down, n_firms,i, flag, obs_up, obs_down)
+    if flag == false
+
+        up_data = Array{Float64, 2}(undef, 3, n_firms)
+        Random.seed!(1234+i)
+        up_data[1,:] = rand(LogNormal(Σ_up[1,1], Σ_up[1,2]), n_firms)
+        up_data[2,:] = rand(LogNormal(Σ_up[2,1], Σ_up[2,2]), n_firms)
+        up_data[3,:] = rand(LogNormal(Σ_up[3,1], Σ_up[3,2]), n_firms)
 
 
-    down_data = Array{Float64, 2}(undef, 3, n_firms)
-    down_data[1,:] = rand(LogNormal(Σ_down[1,1], Σ_down[1,2]), n_firms)
-    down_data[2,:] = rand(LogNormal(Σ_down[2,1], Σ_down[2,2]), n_firms)
-    down_data[3,:] = rand(LogNormal(Σ_down[3,1], Σ_down[3,2]), n_firms)
+        down_data = Array{Float64, 2}(undef, 3, n_firms)
+        down_data[1,:] = rand(LogNormal(Σ_down[1,1], Σ_down[1,2]), n_firms)
+        down_data[2,:] = rand(LogNormal(Σ_down[2,1], Σ_down[2,2]), n_firms)
+        down_data[3,:] = rand(LogNormal(Σ_down[3,1], Σ_down[3,2]), n_firms)
+    elseif flag==true # take observed data as given (do not generate observed chars)
+        Random.seed!(1234+i)
+        up_data = Array{Float64, 2}(undef, 3, n_firms)
+        up_data[1:2,:] = obs_up
+        up_data[3,:] = rand(LogNormal(Σ_up[3,1], Σ_up[3,2]), n_firms)
+        
+        Random.seed!(1234+i)
+        down_data = Array{Float64, 2}(undef, 3, n_firms)
+        down_data[1:2,:] = obs_down
+        down_data[3,:] = rand(LogNormal(Σ_down[3,1], Σ_down[3,2]), n_firms)
+    end
+
     #
     A_mat = β_up + β_down
     C = -1*Transpose(up_data)*A_mat*down_data #pairwise surplus
