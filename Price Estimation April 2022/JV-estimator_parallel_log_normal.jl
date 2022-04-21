@@ -22,7 +22,7 @@ addprocs(23)
     # include("LP_DGP.jl")
 end
 @everywhere begin
-        n_firms=1500
+        n_firms=500
 
 
     # @everywhere function replicate_byseed(n_rep)
@@ -44,17 +44,17 @@ end
     up_data, down_data, price_data_cf = sim_data_JV(bup, bdown, sig_up, sig_down, n_firms, 36, false, 0, 0)
     mu_price = mean(price_data_cf)
 end
-scatter(up_data[1,:], down_data[2,:],markersize =3)
-scatter(down_data[1,:], price_data_cf)
-
-A_mat = bup + bdown
-C_μ = -1*Transpose(up_data)*A_mat*up_data #pairwise surplus
-
-μ = fill(1 / n_firms, n_firms)
-ν = fill(1 / n_firms, n_firms)
-down_data
-
-
+# scatter(up_data[1,:], down_data[2,:],markersize =3)
+# scatter(down_data[1,:], price_data_cf)
+#
+# A_mat = bup + bdown
+# C_μ = -1*Transpose(up_data)*A_mat*up_data #pairwise surplus
+#
+# μ = fill(1 / n_firms, n_firms)
+# ν = fill(1 / n_firms, n_firms)
+# down_data
+#
+#
 
 
 # # down_data = down_data + rand(3,100)
@@ -205,6 +205,93 @@ else
     # opt = BSON.load(dir_bbo_previous)["opt"]
 end
 
+
+
+
+####April 21 2022
+
+
+function loglikepr_upo(b)
+    n_sim=50
+
+    bup = [
+        vcat(b[1:2],b[8])';
+        vcat(b[3:4], 0.)';
+        vcat(0 , 0, 0)'
+    ]
+
+
+    bdown = [
+        vcat(b[5], b[6],0)';
+        vcat(b[7], 0, 0)';
+        vcat(0 ,0., b[9] )'
+     ]
+     sig_up = [0 .1;
+                 0 .2;
+                 0 .1]
+     sig_down = [0 0.1;
+                 0 .2;
+                 0 .1]
+
+     # sig_up = [0 .2;
+     #             0 .3;
+     #             0 .1]
+     #
+     # # sig_up
+     #
+     #
+     # sig_down = [0 0.1;
+     #             0 .4;
+     #             0 .1]
+
+
+    solve_draw =  x->sim_data_JV_up_obs(bup, bdown , sig_up, sig_down, n_firms, 1234+x, true, up_data[1:2,:])
+     # x->sim_data_like(up_data[1:2,:],bup, bdown , [2, 1., 1], [.5, 3, 1], n_firms, 1234+x, 2.5)
+    sim_dat = pmap(solve_draw, 1:n_sim)
+    ll=0.0
+    # h=[0.4, 0.4, 1.2]
+    h=[0.04, 0.04, .06]
+
+    for j=1:n_sim
+        pconst = mean(sim_dat[j][3])-mu_price
+        sim_dat[j][3][:] = sim_dat[j][3] .+ pconst
+    end
+    n_zeros = 0
+    for i =1:n_firms
+        like =0.
+        for j =1:n_sim
+            like+=(
+                pdf(Normal(),((down_data[1,i] - sim_dat[j][2][1,i])/h[1]))
+                *pdf(Normal(),((down_data[2,i] - sim_dat[j][2][2,i])/h[2]))
+                *pdf(Normal(),((price_data_cf[i] - sim_dat[j][3][i])/h[3]))
+                )
+        end
+        # println("like is: ", like, " log of which is: ", log(like/(n_sim*h[1]*h[2]*h[3])))
+        if like == 0
+            # println("Like is zero!!!")
+            ll+= -n_firms
+            n_zeros += 1
+        else
+            ll+=log(like/(n_sim*h[1]*h[2]*h[3]))
+        end
+
+
+    end
+    println("parameter: ", round.(b, digits=3), " function value: ", -ll/n_firms, " Number of zeros: ", n_zeros)
+    return -ll/n_firms
+end
+
+loglikepr_upo(tpar)
+
+
+loglikepr(tpar)
+
+loglikepr_upo([-0.334, 2.028, 0.525, 2.19, 1.963, -2.234, 1.163, -0.059, 0.777])
+
+
+
+
+
 # Start the optimization
 bbsolution = bboptimize(opt)
 
@@ -234,6 +321,8 @@ using CMAEvolutionStrategy
 
 
 res_CMAE = CMAEvolutionStrategy.minimize(loglikepr, rand(9), 1.)
+res_CMAE = CMAEvolutionStrategy.minimize(loglikepr_upo, rand(9), 1.)
+
 res_CMAE = CMAEvolutionStrategy.minimize(loglikepr, [-0.084, 2.157, 0.782, 2.296, 2.129, -2.171, 1.467, -0.381, 0.582] , 1.)
 
 
@@ -377,7 +466,7 @@ stop
 
 
 
-solve_draw= x->sim_data_JV(bup, bdown, sig_up, sig_down, n_firms, 1234+x, true, up_data[1:2,:], down_data[1:2,:])
+solve_draw= x->sim_data_JV_up_obs(bup, bdown, sig_up, sig_down, n_firms, 1234+x, true, up_data[1:2,:])
 
 
 n_sim=500
@@ -393,7 +482,7 @@ end
 hcat([sim_dat[j][2][1,i] for j=1:n_sim], [sim_dat[j][2][2,i]  for j=1:n_sim])'
 h_obj = h -> bcv2_fun(hcat([sim_dat[j][2][1,i] for j=1:n_sim], [sim_dat[j][2][2,i]  for j=1:n_sim])', [sim_dat[j][3][i] for j=1:n_sim], h)
 
-i = 5
+i = 7
 scatter([sim_dat[j][2][1,i] for j=1:n_sim])
 scatter([sim_dat[j][3][i] for j=1:n_sim])
 
@@ -425,6 +514,8 @@ mean([sim_dat[j][3][i] for j=1:n_sim])
 # True parameters: 1.1940
 # [-0.334, 2.028, 0.525, 2.19, 1.963, -2.234, 1.163, -0.059, 0.777]
 altpar = [-1.511, 0.841, 3.25, 1.499, -2.584, -2.178, 1.334, 1.006, 0.77]
+altpar=[-3.316, 0.456, 4.643, 1.685, -0.376, -1.52, 1.241, 3.665, -1.824]
+# altpar= copy(tpar)
 bup1 = [altpar[1] altpar[2] altpar[8];
        altpar[3] altpar[4] 0;
         0 0  0 ]
@@ -439,7 +530,7 @@ sig_up = [0 .1;
 sig_down = [0 0.1;
             0 .2;
             0 .1]
-up_data1, down_data1, price_data_cf1 = sim_data_JV(bup1, bdown1, sig_up, sig_down, n_firms, 36, false, 0, 0)
+up_data1, down_data1, price_data_cf1 = sim_data_JV(bup1, bdown1, sig_up, sig_down, n_firms, 40, false, 0, 0)
 
 mu_price0 = mean(price_data_cf)
 mu_price1 = mean(price_data_cf1)
