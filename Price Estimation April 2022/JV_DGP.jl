@@ -18,7 +18,7 @@ function sim_data_JV(β_up, β_down, Σ_up, Σ_down, n_firms,i, flag, obs_up, ob
         up_data = Array{Float64, 2}(undef, 3, n_firms)
         up_data[1:2,:] = obs_up
         up_data[3,:] = rand(LogNormal(Σ_up[3,1], Σ_up[3,2]), n_firms)
-        
+
         Random.seed!(1234+i)
         down_data = Array{Float64, 2}(undef, 3, n_firms)
         down_data[1:2,:] = obs_down
@@ -46,7 +46,7 @@ function sim_data_JV(β_up, β_down, Σ_up, Σ_down, n_firms,i, flag, obs_up, ob
     up_valuation = diag(up_data'*β_up*down_match_data)
     up_prices = up_profit_data - up_valuation
 
-    return up_data, down_match_data, up_prices, up_profit_data, down_match_profit_data
+    return up_data, down_match_data, up_prices
 end
 #
 #

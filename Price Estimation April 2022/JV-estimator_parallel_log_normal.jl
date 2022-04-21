@@ -22,30 +22,70 @@ addprocs(23)
     # include("LP_DGP.jl")
 end
 @everywhere begin
-        n_firms=100
+        n_firms=1500
 
 
     # @everywhere function replicate_byseed(n_rep)
 
         bup = [1. 1.5 -1;
-               .5 2.5 0;
+               .5 .5 0;
               0 0  0 ]
-        bdown = [2.5 -2 0;
+        bdown = [-2.5 -2 0;
                 1  0 0;
                 0 0 .5]
         B= bup+bdown
 
-        sig_up = [0 .2;
-                    0 .3;
+        sig_up = [0 .1;
+                    0 .2;
                     0 .1]
         sig_down = [0 0.1;
-                    0 .4;
+                    0 .2;
                     0 .1]
-    up_data, down_data, price_data_cf = sim_data_JV(bup, bdown, sig_up, sig_down, n_firms, 20, false, 0, 0)
+    up_data, down_data, price_data_cf = sim_data_JV(bup, bdown, sig_up, sig_down, n_firms, 36, false, 0, 0)
     mu_price = mean(price_data_cf)
 end
-scatter(up_data[2,:], down_data[1,:])
-scatter(up_data[2,:], price_data_cf)
+scatter(up_data[1,:], down_data[2,:],markersize =3)
+scatter(down_data[1,:], price_data_cf)
+
+A_mat = bup + bdown
+C_μ = -1*Transpose(up_data)*A_mat*up_data #pairwise surplus
+
+μ = fill(1 / n_firms, n_firms)
+ν = fill(1 / n_firms, n_firms)
+down_data
+
+
+
+
+# # down_data = down_data + rand(3,100)
+# using OptimalTransport
+#
+# function loss(x, ε)
+#     C_μν =  -1*Transpose(up_data) * A_mat * x
+#     C_ν = -1*Transpose(x)*A_mat*x
+#     @show return sinkhorn_divergence(
+#         μ, ν, C_μν, C_μ, C_ν, ε; maxiter=1000, atol=rtol = 0, regularization=true
+#     )
+# end
+# # Set entropy regularisation parameter
+# ε = .1;
+#
+#
+# loss(down_data, ε)
+#
+#
+# const loss_tape1 = ReverseDiff.GradientTape(x -> loss(x, ε), down_data)
+# const compiled_loss_tape1 = ReverseDiff.compile(loss_tape1)
+# opt = with_logger(SimpleLogger(stderr, Logging.Error)) do
+#     optimize(
+#         x -> loss(x, ε),
+#         (∇, x) -> ReverseDiff.gradient!(∇, compiled_loss_tape1, x),
+#         down_data,
+#         GradientDescent(),
+#         Optim.Options(; iterations=20, g_tol=1e-6, show_trace=true),
+#     )
+# end
+#
 
 ########################
 ##################
@@ -54,7 +94,196 @@ scatter(up_data[2,:], price_data_cf)
 ######################
 ###################
 function loglikepr(b)
-    n_sim=100
+    n_sim=50
+
+    bup = [
+        vcat(b[1:2],b[8])';
+        vcat(b[3:4], 0.)';
+        vcat(0 , 0, 0)'
+    ]
+
+
+    bdown = [
+        vcat(b[5], b[6],0)';
+        vcat(b[7], 0, 0)';
+        vcat(0 ,0., b[9] )'
+     ]
+     sig_up = [0 .1;
+                 0 .2;
+                 0 .1]
+     sig_down = [0 0.1;
+                 0 .2;
+                 0 .1]
+     # sig_up = [0 .2;
+     #             0 .3;
+     #             0 .1]
+     #
+     # # sig_up
+     #
+     #
+     # sig_down = [0 0.1;
+     #             0 .4;
+     #             0 .1]
+
+
+    solve_draw =  x->sim_data_JV(bup, bdown , sig_up, sig_down, n_firms, 1234+x, true, up_data[1:2,:], down_data[1:2,:])
+     # x->sim_data_like(up_data[1:2,:],bup, bdown , [2, 1., 1], [.5, 3, 1], n_firms, 1234+x, 2.5)
+    sim_dat = pmap(solve_draw, 1:n_sim)
+    ll=0.0
+    # h=[0.4, 0.4, 1.2]
+    h=[0.04, 0.04, .06]
+
+    for j=1:n_sim
+        pconst = mean(sim_dat[j][3])-mu_price
+        sim_dat[j][3][:] = sim_dat[j][3] .+ pconst
+    end
+    n_zeros = 0
+    for i =1:n_firms
+        like =0.
+        for j =1:n_sim
+            like+=(
+                pdf(Normal(),((down_data[1,i] - sim_dat[j][2][1,i])/h[1]))
+                *pdf(Normal(),((down_data[2,i] - sim_dat[j][2][2,i])/h[2]))
+                *pdf(Normal(),((price_data_cf[i] - sim_dat[j][3][i])/h[3]))
+                )
+        end
+        # println("like is: ", like, " log of which is: ", log(like/(n_sim*h[1]*h[2]*h[3])))
+        if like == 0
+            # println("Like is zero!!!")
+            ll+= -n_firms
+            n_zeros += 1
+        else
+            ll+=log(like/(n_sim*h[1]*h[2]*h[3]))
+        end
+
+
+    end
+    println("parameter: ", round.(b, digits=3), " function value: ", -ll/n_firms, " Number of zeros: ", n_zeros)
+    return -ll/n_firms
+end
+
+
+
+# tpar = [1, 1.5, .5, 2.5, 2.5, -2, 1, -1, .5]
+tpar= [1, 1.5, .5, .5, -2.5, -2, 1, -1, .5]
+
+# guess = [1.5, 1., 1, 2, 2, 0, 1,  1, .5]
+# @benchmark loglikepr(tpar)
+loglikepr(tpar)
+loglikepr([-0.334, 2.028, 0.525, 2.19, 1.963, -2.234, 1.163, -0.059, 0.777])
+loglikepr([-0.084, 2.157, 0.782, 2.296, 2.129, -2.171, 1.467, -0.381, 0.582] )
+loglikepr([0.816, 1.542, -0.497, 2.398, 2.057, -2.287, 0.899, -0.013, 0.966])
+
+res_1 = Optim.optimize(loglikepr,[-1.033, 1.396, 0.346, 2.288, 1.797, -2.063, 0.396, -0.127, 1.333]  )
+res_1 = Optim.optimize(loglikepr,tpar  ) 15.096311913968014
+# parameter: [1.047, 1.485, 0.517, 2.484, 2.497, -1.949, 0.952, -0.884, 0.552] function value: -15.096311913968014 Number of zeros: 1
+loglikepr(guess)
+loglikepr(ones(9))
+# res_1 = Optim.optimize(loglikepr, tmp)
+# res_1 = Optim.optimize(loglikepr,tpar )
+
+res_2 = Optim.optimize(loglikepr, [0.487, 1.701, 0.921, 2.479, 2.275, -1.928, 1.226, -0.545, 0.542])
+
+# parameter: [-0.602, 1.928, 0.458, 2.279, 1.916, -2.156, 1.172, -0.137, 0.786] function value: -5.231860044952853 Number of zeros: 0
+
+loglike_3p = x-> loglikepr(vcat(x,tpar[4:end]))
+loglike_3p([1.,1.5,.5])
+res_1 = Optim.optimize(loglike_3p,rand(3) )
+
+
+bbo_search_range = (-3,3)
+bbo_population_size =50
+SMM_session =1
+bbo_max_time=86000
+bbo_ndim = 9
+
+if SMM_session == 1
+    # Set up the solver for the first session of optimization
+    opt = bbsetup(loglikepr; SearchRange = bbo_search_range, NumDimensions =bbo_ndim, PopulationSize = bbo_population_size, Method = :adaptive_de_rand_1_bin_radiuslimited, MaxTime = bbo_max_time)
+else
+    # Load the optimization progress to restart the optimization
+    # opt = BSON.load(dir_bbo_previous)["opt"]
+end
+
+# Start the optimization
+bbsolution = bboptimize(opt)
+
+opt
+# Save the optimization status
+bbo = Dict()
+push!(bbo, "opt" => opt)
+push!(bbo, "bbsolution" => bbsolution)
+bson(dir_bbo_current, bbo)
+
+bbsolution1 = bboptimize(opt)
+
+
+opt = bbsetup(loglikepr; SearchRange = bbo_search_range, NumDimensions =bbo_ndim,  Method = :simultaneous_perturbation_stochastic_approximation, MaxTime = bbo_max_time)
+bbsolution1 = bboptimize(opt)
+
+
+# res_global = bboptimize(loglikepr; SearchRange = (-3.,3.), Method= :separable_nes, NumDimensions = 9, MaxTime = 80000.0)
+res_global = bboptimize(loglikepr, SearchRange = (-3.,3.), NumDimensions = 9, MaxTime = 80000.0)
+
+
+
+
+
+using CMAEvolutionStrategy
+
+
+
+res_CMAE = CMAEvolutionStrategy.minimize(loglikepr, rand(9), 1.)
+res_CMAE = CMAEvolutionStrategy.minimize(loglikepr, [-0.084, 2.157, 0.782, 2.296, 2.129, -2.171, 1.467, -0.381, 0.582] , 1.)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# April 20
+# a different bandwidth for each simulation
+
+
+
+
+@everywhere function bcv2_fun(down_data, price_data_cf, h)
+    h=abs.(h)
+    ll = 0.0
+    n_firms = length(price_data_cf)
+    for i = 1:n_firms
+        for j=1:n_firms
+            if (j!=i)
+
+                expr_1 = ((down_data[1,i]-down_data[1,j])/h[1])^2 + ((down_data[2,i]-down_data[2,j])/h[2])^2 + ((price_data_cf[i]-price_data_cf[j])/h[3])^2
+                expr_2 = pdf(Normal(),(down_data[1,i]-down_data[1,j])/h[1]) * pdf(Normal(),((down_data[2,i]-down_data[2,j])/h[2])) * pdf(Normal(),((price_data_cf[i]-price_data_cf[j])/h[3]))
+                ll += (expr_1 - (2*3 +4)*expr_1 + (3^2 +2*3))*expr_2
+            end
+        end
+    end
+    val = ((sqrt(2*pi))^3 * n_firms *h[1]*h[2]*h[3])^(-1)+ ((4*n_firms*(n_firms-1))*h[1]*h[2]*h[3])^(-1) * ll
+    # println("band: ",h," val: ", val)
+    return val
+end
+
+function loglikepr_varh(b)
+    n_sim=50
 
     bup = [
         vcat(b[1:2],b[8])';
@@ -89,12 +318,26 @@ function loglikepr(b)
                  0 .1]
 
 
-    solve_draw =  x->sim_data_JV(bup, bdown , sig_up, sig_down, n_firms, 1234+x, true, up_data[1:2,:], down_data[1:2,:])
-     # x->sim_data_like(up_data[1:2,:],bup, bdown , [2, 1., 1], [.5, 3, 1], n_firms, 1234+x, 2.5)
+    solve_draw= x->sim_data_JV(bup, bdown , sig_up, sig_down, n_firms, 1234+x, true, up_data[1:2,:], down_data[1:2,:])
+
+
+
     sim_dat = pmap(solve_draw, 1:n_sim)
+    h_vec = Array{Float64, 2}(undef, 3, n_firms)
+    for i = 1:n_firms
+        h_obj = h -> bcv2_fun(hcat([sim_dat[j][2][1,i] for j=1:n_sim], [sim_dat[j][2][2,i]  for j=1:n_sim])', [sim_dat[j][3][i] for j=1:n_sim], h)
+        res_bcv = Optim.optimize(h_obj, 2*ones(3),LBFGS(),autodiff = :forward)
+        @show h_vec[:,i] = Optim.minimizer(res_bcv)
+        @show h_obj(Optim.minimizer(res_bcv))
+    end
+
+
+
+
+
     ll=0.0
     # h=[0.4, 0.4, 1.2]
-    h=[0.05, 0.05, .11]
+    h=[0.04, 0.02, .08]
 
     for j=1:n_sim
         pconst = mean(sim_dat[j][3])-mu_price
@@ -127,63 +370,113 @@ end
 
 
 
-tpar = [1, 1.5, .5, 2.5, 2.5, -2, 1, -1, .5]
-guess = [1.5, 1., 1, 2, 2, 0, 1,  1, .5]
-# @benchmark loglikepr(tpar)
-loglikepr(tpar)
-loglikepr(guess)
-loglikepr(ones(9))
+loglikepr_varh(tpar)
 
-# res_1 = Optim.optimize(loglikepr, tmp)
-# res_1 = Optim.optimize(loglikepr,tpar )
 
-res_2 = Optim.optimize(loglikepr,  [-1, 1.5, .5, 2.5, 2.5, -2, 1, -1, .5])
+stop
 
 
 
+solve_draw= x->sim_data_JV(bup, bdown, sig_up, sig_down, n_firms, 1234+x, true, up_data[1:2,:], down_data[1:2,:])
 
-loglike_3p = x-> loglikepr(vcat(x,tpar[4:end]))
-loglike_3p([1.,1.5,.5])
-res_1 = Optim.optimize(loglike_3p,rand(3) )
 
-# res_global = bboptimize(loglikepr; SearchRange = (-3.,3.), Method= :separable_nes, NumDimensions = 9, MaxTime = 80000.0)
-res_global = bboptimize(loglikepr, SearchRange = (-3.,3.), NumDimensions = 9, MaxTime = 80000.0)
+n_sim=500
+sim_dat = pmap(solve_draw, 1:n_sim)
+h_vec = Array{Float64, 2}(undef, 3, n_firms)
+for i = 1:n_firms
+    h_obj = h -> bcv2_fun(hcat([sim_dat[j][2][1,i] for j=1:n_sim], [sim_dat[j][2][2,i]  for j=1:n_sim])', [sim_dat[j][3][i] for j=1:n_sim], h)
+    res_bcv = Optim.optimize(h_obj, [.05,.05,.1],LBFGS(),autodiff = :forward)
+    @show h_vec[:,i] = Optim.minimizer(res_bcv)
+    @show h_obj(Optim.minimizer(res_bcv))
+end
+
+hcat([sim_dat[j][2][1,i] for j=1:n_sim], [sim_dat[j][2][2,i]  for j=1:n_sim])'
+h_obj = h -> bcv2_fun(hcat([sim_dat[j][2][1,i] for j=1:n_sim], [sim_dat[j][2][2,i]  for j=1:n_sim])', [sim_dat[j][3][i] for j=1:n_sim], h)
+
+i = 5
+scatter([sim_dat[j][2][1,i] for j=1:n_sim])
+scatter([sim_dat[j][3][i] for j=1:n_sim])
+
+down_data[1,i]
+price_data_cf[i]
+mean([sim_dat[j][3][i] for j=1:n_sim])
+
+@benchmark hcat([sd[i][2][1,1] for i=1:10], [sd[i][2][2,1]  for i=1:10])
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # Monday April 18, 2022 Log Normal
 # N=500 S= 100 parameter: [2.201, -0.744, 2.144, 2.998, 2.766, -0.111, -1.229, -0.347, 0.688] function value: -0.7557211674202852 Number of zeros: 0
 # N=500 S=100 parameter: [-0.119, 0.007, 1.138, 3.0, 0.771, -0.598, -0.094, -0.003, 1.545] function value: 1.1840699948728597 Number of zeros: 0
 #     (different bandwidth)
 # True parameters: 1.1940
-
-bup1 = [-.119 0.007 -003;
-       1.138 3.0 0;
-      0 0  0 ]
-bdown1 = [.771 -0.598 0;
-        -0.094  0 0;
-        0 0 1.545]
+# [-0.334, 2.028, 0.525, 2.19, 1.963, -2.234, 1.163, -0.059, 0.777]
+altpar = [-1.511, 0.841, 3.25, 1.499, -2.584, -2.178, 1.334, 1.006, 0.77]
+bup1 = [altpar[1] altpar[2] altpar[8];
+       altpar[3] altpar[4] 0;
+        0 0  0 ]
+bdown1 = [altpar[5] altpar[6] 0;
+        altpar[7]  0 0;
+        0 0 altpar[9]]
 B1= bup1+bdown1
 
-sig_up1 = [0 .2;
-            0 .3;
+sig_up = [0 .1;
+            0 .2;
             0 .1]
-sig_down1 = [0 0.1;
-            0 .4;
+sig_down = [0 0.1;
+            0 .2;
             0 .1]
-up_data1, down_data1, price_data_cf1 = sim_data_JV(bup1, bdown1, sig_up, sig_down, n_firms, 20, false, 0, 0)
+up_data1, down_data1, price_data_cf1 = sim_data_JV(bup1, bdown1, sig_up, sig_down, n_firms, 36, false, 0, 0)
+
+mu_price0 = mean(price_data_cf)
 mu_price1 = mean(price_data_cf1)
 
 var(down_data[3,:])
-
+var(down_data1[3,:])
 var(price_data_cf)
-
+var(price_data_cf1)
 cor(up_data[1,:],down_data[2,:])
 cor(up_data1[1,:],down_data1[2,:])
 
+cor(up_data[1,:],down_data[1,:])
+cor(up_data1[1,:],down_data1[1,:])
 
+cor(up_data1[2,:],price_data_cf1)
+cor(up_data[2,:],price_data_cf)
+
+scatter(up_data[1,:], down_data[1,:],
+        xlims=(0.5,2), ylims=(0.5,2.5))
+scatter!(up_data1[1,:], down_data1[1,:],
+        xlims=(0.5,2), ylims=(0.5,2.5), color =:red,
+        markersize = 2 )
+
+scatter(up_data[2,:], price_data_cf)
+scatter!(up_data1[2,:], price_data_cf1,
+        color =:red,
+        markersize = 2 )
+
+
+
+scatter(down_data[1,:], down_data1[1,:])
+scatter(down_data[1,:], down_data1[1,:])
 
 scatter(price_data_cf, price_data_cf1)
 
 function bcv2_fun(h)
+    h=abs.(h)
     ll = 0.0
     for i = 1:n_firms
         for j=1:n_firms
@@ -198,16 +491,16 @@ function bcv2_fun(h)
         end
     end
     val = ((sqrt(2*pi))^3 * n_firms *h[1]*h[2]*h[3])^(-1)+ ((4*n_firms*(n_firms-1))*h[1]*h[2]*h[3])^(-1) * ll
-    println("band: ",h," val: ", val)
+    # println("band: ",h," val: ", val)
     return val
 end
 # res_ucv = Optim.optimize(ucv_fun, rand(3))
-res_bcv = Optim.optimize(bcv2_fun, [0.1,.1,.1])
-
-
+@benchmark res_bcv = Optim.optimize(bcv2_fun, [.05,.05,.1],LBFGS(),autodiff = :forward)
+Optim.minimizer(res_bcv)
 
 
 function ucv_fun(h)
+    h=abs.(h)
     ll = 0.0
     for i = 1:n_firms
         for j=1:n_firms
