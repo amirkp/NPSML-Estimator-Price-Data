@@ -1,80 +1,103 @@
 
-using Optim
-using LinearAlgebra
-using Random
-using Distributions
-using BlackBoxOptim
-using Plots
-using Assignment
-using BenchmarkTools
-using ForwardDiff
-using OptimalTransport
-# using JuMP
-# using Gurobi
+
+using Distributed
+addprocs(23)
+@everywhere using Optim
+@everywhere begin
+    using LinearAlgebra
+    using Random
+    using Distributions
+    using BlackBoxOptim
+    using Plots
+    using Assignment
+    using BenchmarkTools
+
 # @everywhere include("data_sim_seed.jl")
 # include("data_sim_like.jl")
-include("data_sim_like_2d_2d_diff.jl")
-include("data_sim_like_2d_2d_match_only.jl")
+    # include("data_sim_like_2d_2d_diff.jl")
+    # include("data_sim_like_2d_2d_match_only.jl")
 
-include("JV_DGP-Normal.jl")
-# include("LP_DGP.jl")
-n_firms=500
-
-
-# @everywhere function replicate_byseed(n_rep)
-
-bup = [1. 1.5 -1;
-       .5 2.5 0;
-      0 0  0 ]
-bdown = [2.5 -2 0;
-        1  0 0;
-        0 0 .5]
-B= bup+bdown
+    include("JV_DGP-Normal.jl")
+    # include("LP_DGP.jl")
+end
+@everywhere begin
+        n_firms=100
 
 
-# sig_up  = rand(3,2)
-# sig_down= rand(3,2)
+    # @everywhere function replicate_byseed(n_rep)
+
+        bup = [1. 1.5 -1;
+               .5 2.5 0;
+              0 0  0 ]
+        bdown = [2.5 -2 0;
+                1  0 0;
+                0 0 .5]
+        B= bup+bdown
 
 
-
-# sig_up[:,1] .= 0
-# sig_down[:,1] .= 0
-
-# sig_up
+    # sig_up  = rand(3,2)
+    # sig_down= rand(3,2)
 
 
 
-sig_up = [0 2.;
-            0 1.;
-            0 1.]
+    # sig_up[:,1] .= 0
+    # sig_down[:,1] .= 0
 
-# sig_up
-
-
-sig_down = [0 0.5;
-            0 3.;
-            0 1.]
-
-
-# sig_down
+    # sig_up
 
 
 
+        sig_up = [0 2.;
+                    0 1.;
+                    0 1.]
+
+        # sig_up
+
+
+        sig_down = [0 0.5;
+                    0 3.;
+                    0 1.]
+
+
+    # sig_down
 
 
 
-# up_data, down_data, price_data_cf, tmat =
-#     sim_data_like( -1, bup, bdown, [2, 1., 1.], [.5, 3, 1.], n_firms, 20, 2.5)
 
-# up_data, down_data, price, u_profit, d_profit = sim_data_JV(bup, bdown, sig_up, sig_down, n_firms,20)
-up_data, down_data, price_data_cf = sim_data_JV_Normal(bup, bdown, sig_up, sig_down, n_firms,20, false, 0, 0)
 
-# @benchmark up_data, down_data, price_data_cf, tmat =
-    # sim_data_like( -1, bup, bdown, [2, 1., 1.], [.5, 3, 1.], n_firms, 20, 2.5)
-mu_price = mean(price_data_cf)
 
-# tmat
-tpar = [1, 1.5, .5, 2.5, 2.5, -2, 1, -1, .5]
+    # up_data, down_data, price_data_cf, tmat =
+    #     sim_data_like( -1, bup, bdown, [2, 1., 1.], [.5, 3, 1.], n_firms, 20, 2.5)
+
+    # up_data, down_data, price, u_profit, d_profit = sim_data_JV(bup, bdown, sig_up, sig_down, n_firms,20)
+    up_data, down_data, price_data_cf = sim_data_JV_Normal(bup, bdown, sig_up, sig_down, n_firms,20, false, 0, 0)
+
+    # @benchmark up_data, down_data, price_data_cf, tmat =
+        # sim_data_like( -1, bup, bdown, [2, 1., 1.], [.5, 3, 1.], n_firms, 20, 2.5)
+    mu_price = mean(price_data_cf)
+end
+
+
+function bcv2_fun(h)
+    ll = 0.0
+    for i = 1:n_firms
+        for j=1:n_firms
+            if (j!=i)
+                # expr_1 = 0.0
+                # expr_1 = ((up_data[1,i]-up_data[1,j])/h[1])^2 + ((down_data[1,i]-down_data[1,j])/h[2])^2 + ((price_data_cf[i]-price_data_cf[j])/h[3])^2
+                # expr_2 = pdf(Normal(),(up_data[1,i]-up_data[1,j])/h[1]) * pdf(Normal(),((down_data[1,i]-down_data[1,j])/h[2])) * pdf(Normal(),((price_data_cf[i]-price_data_cf[j])/h[3]))
+                expr_1 = ((down_data[1,i]-down_data[1,j])/h[1])^2 + ((down_data[2,i]-down_data[2,j])/h[2])^2 + ((price_data_cf[i]-price_data_cf[j])/h[3])^2
+                expr_2 = pdf(Normal(),(down_data[1,i]-down_data[1,j])/h[1]) * pdf(Normal(),((down_data[2,i]-down_data[2,j])/h[2])) * pdf(Normal(),((price_data_cf[i]-price_data_cf[j])/h[3]))
+                ll += (expr_1 - (2*3 +4)*expr_1 + (3^2 +2*3))*expr_2
+            end
+        end
+    end
+    val = ((sqrt(2*pi))^3 * n_firms *h[1]*h[2]*h[3])^(-1)+ ((4*n_firms*(n_firms-1))*h[1]*h[2]*h[3])^(-1) * ll
+    println("band: ",h," val: ", val)
+    return val
+end
+# res_ucv = Optim.optimize(ucv_fun, rand(3))
+res_bcv = Optim.optimize(bcv2_fun, [0.1,.1,.1])
 
 
 ########################
@@ -83,8 +106,7 @@ tpar = [1, 1.5, .5, 2.5, 2.5, -2, 1, -1, .5]
 #############
 ######################
 ###################
-# x::AbstractVector{T}) where T
-function loglikepr(b::AbstractVector{T}) where T
+function loglikepr(b)
     n_sim=100
 
     bup = [
@@ -111,15 +133,15 @@ function loglikepr(b::AbstractVector{T}) where T
 
     solve_draw =  x->sim_data_JV_Normal(bup, bdown , sig_up, sig_down, n_firms, 1234+x, true, up_data[1:2,:], down_data[1:2,:])
      # x->sim_data_like(up_data[1:2,:],bup, bdown , [2, 1., 1], [.5, 3, 1], n_firms, 1234+x, 2.5)
-    sim_dat = map(solve_draw, 1:n_sim)
+    sim_dat = pmap(solve_draw, 1:n_sim)
     ll=0.0
-    h=[0.1, 0.2, 1.5]
+    h=[0.1, 0.2, 0.6]
 
     for j=1:n_sim
         pconst = mean(sim_dat[j][3])-mu_price
         sim_dat[j][3][:] = sim_dat[j][3] .+ pconst
     end
-
+    n_zeros = 0
     for i =1:n_firms
         like =0.
         for j =1:n_sim
@@ -129,29 +151,80 @@ function loglikepr(b::AbstractVector{T}) where T
                 *pdf(Normal(),((price_data_cf[i] - sim_dat[j][3][i])/h[3]))
                 )
         end
-        ll+=log(like/(n_sim*h[1]*h[2]*h[3]))
+        # println("like is: ", like, " log of which is: ", log(like/(n_sim*h[1]*h[2]*h[3])))
+        if like == 0
+            # println("Like is zero!!!")
+            ll+= -n_firms
+            n_zeros += 1
+        else
+            ll+=log(like/(n_sim*h[1]*h[2]*h[3]))
+        end
+
+
     end
-    println("parameter: ", b , " function value: ", -ll/n_firms)
-    # round.(b, digits=3)
+    println("parameter: ", round.(b, digits=3), " function value: ", -ll/n_firms, " Number of zeros: ", n_zeros)
     return -ll/n_firms
 end
+
+
+
+tpar = [1, 1.5, .5, 2.5, 2.5, -2, 1, -1, .5]
 
 # @benchmark loglikepr(tpar)
 loglikepr(tpar)
 
-g = x-> ForwardDiff.gradient(loglikepr,x);
-optimize(loglikepr, rand(9), LBFGS())
+loglikepr(rand(9))
 
+# res_1 = Optim.optimize(loglikepr, tmp)
+# res_1 = Optim.optimize(loglikepr,tpar )
 
-g(rand(9))
-
-
-
-
+res_2 = Optim.optimize(loglikepr,  [-1, 1.5, .5, 2.5, 2.5, -2, 1, -1, .5])
 
 
 
 
+loglike_3p = x-> loglikepr(vcat(x,tpar[4:end]))
+loglike_3p([1.,1.5,.5])
+res_1 = Optim.optimize(loglike_3p,rand(3) )
+
+res_global = bboptimize(loglikepr, tpar, SearchRange = (-3.,3.), NumDimensions = 9, MaxTime = 80000.0)
+# Friday April 15, 2022
+# N=100, twice band: parameter: [1.884, 1.361, 0.362, 2.5, 2.5, -2.0, 1.0, -1.0, 0.5] function value: 1.7403883383530125
+# N=200, twice band: parameter: [1.382, 1.49, 0.566, 2.5, 2.5, -2.0, 1.0, -1.0, 0.5] function value: 1.7262823845855166
+# N=200, half  band: parameter: [1.234, 1.526, 0.504, 2.5, 2.5, -2.0, 1.0, -1.0, 0.5] function value: 0.5373897977220483
+# N=300, half  band: parameter: [1.267, 1.491, 0.548, 2.5, 2.5, -2.0, 1.0, -1.0, 0.5] function value: 0.52157590903904
+
+# n=500 nsim=100 [-0.463, 1.423, 0.611, 2.675, 2.964, -1.978, 1.197, -0.919, 0.609] function value: 1.0317245476042256
+# n=100 nsim =100 parameter: [-0.401, 1.452, 0.315, 2.715, 1.854, -1.988, 1.511, -0.655, 0.971] function value: 0.34560233205579133
+# n=100 nsim =200 parameter: parameter: [-0.919, 1.514, 1.003, 2.552, 0.773, -1.855, 1.183, 0.008, 1.37] function value: -0.31998859383319567
+# n=100 nsim =300 parameter: [-0.858, 1.549, 0.957, 2.643, 0.678, -1.859, 1.714, -0.007, 2.073] function value: -0.3589305082145246
+#
+
+# Saturday April 16, 2022
+#
+res_global = bboptimize(loglike_3p; SearchRange = (-3.,3.), Method= :separable_nes, NumDimensions = 3, MaxTime = 80000.0)
+res_global = bboptimize(loglikepr; SearchRange = (-3.,3.), Method= :separable_nes, NumDimensions = 9, MaxTime = 80000.0)
+
+# n=200, s=300                 parameter: [1.038, 1.433, 0.384, 2.537, 2.261, -1.997, -0.089, 0.756, 0.52] function value: 0.4294609117347288
+# n=200, s=300 parameter:                 [1.038, 1.433, 0.384, 2.537, 2.261, -1.997, -0.089, 0.756, 0.52] function value: 0.4294609117347288
+# n=300, s=300 half bandwidth: parameter: [1.31, 1.511, 0.548, 2.571, 2.606, -2.01, 1.567, 1.088, 0.724] function value: 0.6504206093133941
+# n=500, s==100                parameter: [1.245, 1.455, 0.838, 2.525, 2.608, -1.947, 0.786, -0.852, 0.452] function value: 0.6046616833454163
+
+
+
+
+
+
+# Monday April 18
+# parameter: [1.036, 1.55, 0.548, 2.561, 2.16, -1.958, 1.483, 0.793, 0.585] function value: 0.6251922703860227 Number of zeros: 0
+# 14304.35 secs, 14304 evals, 14176 steps, improv/step: 0.132 (last = 0.0000), fitness=0.619760126
+
+
+
+
+
+
+stop
 
 
 
@@ -161,11 +234,76 @@ g(rand(9))
 
 
 
-toplot = x-> loglikepr(vcat(x,tpar[2:end]))
-plot(toplot, 0,4)
 
-res_1 = Optim.optimize(loglikepr, tmp)
-res_1 = Optim.optimize(loglikepr,tpar )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#
+# @everywhere using ForwardDiff
+# @everywhere g = x-> ForwardDiff.gradient(loglikepr,x);
+# g(tpar)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
