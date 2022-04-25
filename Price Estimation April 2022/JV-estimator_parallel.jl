@@ -70,7 +70,7 @@ end
     #     sim_data_like( -1, bup, bdown, [2, 1., 1.], [.5, 3, 1.], n_firms, 20, 2.5)
 
     # up_data, down_data, price, u_profit, d_profit = sim_data_JV(bup, bdown, sig_up, sig_down, n_firms,20)
-    up_data, down_data, price_data_cf = sim_data_JV_Normal(bup, bdown, sig_up, sig_down, n_firms,20, false, 0, 0)
+    up_data, down_data, price_data_cf = sim_data_JV_Normal(bup, bdown, sig_up, sig_down, n_firms,200, false, 0, 0)
 
     # @benchmark up_data, down_data, price_data_cf, tmat =
         # sim_data_like( -1, bup, bdown, [2, 1., 1.], [.5, 3, 1.], n_firms, 20, 2.5)
@@ -135,7 +135,7 @@ function loglikepr(b)
      # x->sim_data_like(up_data[1:2,:],bup, bdown , [2, 1., 1], [.5, 3, 1], n_firms, 1234+x, 2.5)
     sim_dat = pmap(solve_draw, 1:n_sim)
     ll=0.0
-    h=[0.1, 0.2, 0.6]
+    h=[0.2, 0.4, 1.3]
 
     for j=1:n_sim
         pconst = mean(sim_dat[j][3])-mu_price
@@ -162,7 +162,7 @@ function loglikepr(b)
 
 
     end
-    println("parameter: ", round.(b, digits=3), " function value: ", -ll/n_firms, " Number of zeros: ", n_zeros)
+    # println("parameter: ", round.(b, digits=3), " function value: ", -ll/n_firms, " Number of zeros: ", n_zeros)
     return -ll/n_firms
 end
 
@@ -170,11 +170,37 @@ end
 
 tpar = [1, 1.5, .5, 2.5, 2.5, -2, 1, -1, .5]
 
+
+
 # @benchmark loglikepr(tpar)
 loglikepr(tpar)
-
+loglikepr([1.313, 1.447, 0.133, 3.009, -1.019, -1.777, 0.379, -0.024, 5.981])
+loglikepr([0.302, 1.723, 0.03, 2.733, 0.252, -1.987, 2.125, 0.001, 1.266])
 loglikepr(rand(9))
+loglikepr([3.8645615483507396, 1.4558564772194384, 2.9627013695336397, 2.4784694320036293, 5.081936479970299, -2.0619004389927995, 2.7078474712493015, -1.7828873358870414, 0.7035447812543468])
 
+
+
+using CMAEvolutionStrategy
+
+
+
+res_CMAE = CMAEvolutionStrategy.minimize(loglikepr, rand(9), 1.)
+res_CMAE = CMAEvolutionStrategy.minimize(loglikepr, rand(9), 1.,
+        lower = nothing,
+         upper = nothing,
+         noise_handling = nothing,
+         callback = (object, inputs, function_values, ranks) -> nothing,
+         parallel_evaluation = false,
+         multi_threading = false,
+         verbosity = 1,
+         seed = rand(UInt),
+         maxtime = 150,
+         maxiter = nothing,
+         maxfevals = nothing,
+         ftarget = nothing,
+         xtol = nothing,
+         ftol = 1e-3)
 # res_1 = Optim.optimize(loglikepr, tmp)
 # res_1 = Optim.optimize(loglikepr,tpar )
 
