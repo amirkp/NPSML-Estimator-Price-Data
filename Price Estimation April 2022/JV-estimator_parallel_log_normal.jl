@@ -467,6 +467,7 @@ stop
 
 
 solve_draw= x->sim_data_JV_up_obs(bup, bdown, sig_up, sig_down, n_firms, 1234+x, true, up_data[1:2,:])
+solve_draw= x->sim_data_JV(bup, bdown, sig_up, sig_down, n_firms, 1234+x, true, up_data[1:2,:],down_data[1:2,:])
 
 
 n_sim=500
@@ -548,8 +549,13 @@ cor(up_data1[1,:],down_data1[1,:])
 cor(up_data1[2,:],price_data_cf1)
 cor(up_data[2,:],price_data_cf)
 
+
+cor(up_data1[1,:],price_data_cf1)
+cor(up_data[1,:],price_data_cf)
+
 scatter(up_data[1,:], down_data[1,:],
         xlims=(0.5,2), ylims=(0.5,2.5))
+
 scatter!(up_data1[1,:], down_data1[1,:],
         xlims=(0.5,2), ylims=(0.5,2.5), color =:red,
         markersize = 2 )
@@ -559,12 +565,77 @@ scatter!(up_data1[2,:], price_data_cf1,
         color =:red,
         markersize = 2 )
 
-
+cor(price_data_cf, price_data_cf1)
+scatter(price_data_cf, price_data_cf1)
 
 scatter(down_data[1,:], down_data1[1,:])
 scatter(down_data[1,:], down_data1[1,:])
 
 scatter(price_data_cf, price_data_cf1)
+
+
+pdf.(Normal(),((price_data_cf-price_data_cf1)[:]/0.09))
+pdf.(Normal(),((up_data[1,:]-up_data1[1,:])[:]/0.09))
+scatter((price_data_cf.-[sim_dat[j][3][100] for j=1:n_sim])[:])
+scatter((down_data[1,:].-[sim_dat[j][1][3,i] for j=1:n_sim])[:])
+
+
+
+
+
+
+solve_draw= x->sim_data_JV_up_obs(bup1, bdown1, sig_up, sig_down, n_firms, 1234+x, true, up_data[1:2,:])
+solve_draw= x->sim_data_JV(bup, bdown, sig_up, sig_down, n_firms, 1234+x, true, up_data[1:2,:],down_data[1:2,:])
+
+n_sim=500
+sim_dat = pmap(solve_draw, 1:n_sim)
+
+
+#############################################
+#############################################
+################ Illustration ###########
+#############################################
+#############################################
+#############################################
+
+solve_draw= x->sim_data_JV_up_obs(bup, bdown, sig_up, sig_down, n_firms, 1234+x, true, up_data[1:2,:])
+solve_draw1= x->sim_data_JV_up_obs(bup1*10, bdown1, sig_up, sig_down, n_firms, 1234+x, true, up_data[1:2,:])
+solve_draw= x->sim_data_JV(bup, bdown, sig_up, sig_down, n_firms, 1234+x, true, up_data[1:2,:],down_data[1:2,:])
+solve_draw1= x->sim_data_JV(bup1, bdown1, sig_up, sig_down, n_firms, 1234+x, true, up_data[1:2,:],down_data[1:2,:])
+
+n_sim=500
+sim_dat = pmap(solve_draw, 1:n_sim)
+sim_dat1 = pmap(solve_draw1, 1:n_sim)
+
+i=20
+p1 = scatter(
+        ([down_data[1,i] for j=1:n_sim])-([sim_dat[j][2][1,i] for j=1:n_sim])
+            , markersize=3, title="down1");
+p2= scatter(
+        ([down_data[2,i] for j=1:n_sim])-([sim_dat[j][2][2,i] for j=1:n_sim])
+            , markersize=3, title = "down2");
+p3= scatter(
+        ([price_data_cf[i] for j=1:n_sim])-([sim_dat[j][3][i] for j=1:n_sim])
+            , markersize=3, title= "price");
+
+
+####### PLOT WITH ALTERNATIVE VALUES ######
+
+
+
+p4 = scatter(
+        ([down_data[1,i] for j=1:n_sim])-([sim_dat1[j][2][1,i] for j=1:n_sim])
+            , markersize=3, title="down1");
+p5= scatter(
+        ([down_data[2,i] for j=1:n_sim])-([sim_dat1[j][2][2,i] for j=1:n_sim])
+            , markersize=3, title= "down2");
+p6= scatter(
+        ([price_data_cf[i] for j=1:n_sim])-([sim_dat1[j][3][i] for j=1:n_sim])
+            , markersize=3, title = "price");
+
+plot(p1,p2,p3,p4,p5,p6, legends=false)
+
+
 
 function bcv2_fun(h)
     h=abs.(h)
