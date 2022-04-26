@@ -3,29 +3,28 @@ function sim_data_JV_Normal(β_up::AbstractMatrix{T}, β_down::AbstractMatrix{T}
 
         up_data = Array{Float64, 2}(undef, 3, n_firms)
         Random.seed!(1234+i)
-        up_data[1,:] = rand(Normal(Σ_up[1,1], Σ_up[1,2]), n_firms)
-        up_data[2,:] = rand(Normal(Σ_up[2,1], Σ_up[2,2]), n_firms)
-        up_data[3,:] = rand(Normal(Σ_up[3,1], Σ_up[3,2]), n_firms)
+        up_data[1,:] = rand(Normal(Σ_up[1,1], sqrt(Σ_up[1,2])), n_firms)
+        up_data[2,:] = rand(Normal(Σ_up[2,1], sqrt(Σ_up[2,2])), n_firms)
+        up_data[3,:] = rand(Normal(Σ_up[3,1], sqrt(Σ_up[3,2])), n_firms)
 
         Random.seed!(1234+i)
 
         down_data = Array{Float64, 2}(undef, 3, n_firms)
-        down_data[1,:] = rand(Normal(Σ_down[1,1], Σ_down[1,2]), n_firms)
-        down_data[2,:] = rand(Normal(Σ_down[2,1], Σ_down[2,2]), n_firms)
-        down_data[3,:] = rand(Normal(Σ_down[3,1], Σ_down[3,2]), n_firms)
+        down_data[1,:] = rand(Normal(Σ_down[1,1], sqrt(Σ_down[1,2])), n_firms)
+        down_data[2,:] = rand(Normal(Σ_down[2,1], sqrt(Σ_down[2,2])), n_firms)
+        down_data[3,:] = rand(Normal(Σ_down[3,1], sqrt(Σ_down[3,2])), n_firms)
     elseif flag==true
         Random.seed!(1234+i)
         up_data = Array{Float64, 2}(undef, 3, n_firms)
         up_data[1:2,:] = obs_up
-        up_data[3,:] = rand(Normal(Σ_up[3,1], Σ_up[3,2]), n_firms)
+        up_data[3,:] = rand(Normal(Σ_up[3,1], sqrt(Σ_up[3,2])), n_firms)
 
         Random.seed!(1234+i)
 
         down_data = Array{Float64, 2}(undef, 3, n_firms)
-        # down_data[1:2,:] = obs_down
-        down_data[1,:] = rand(Normal(Σ_down[1,1], Σ_down[1,2]), n_firms)
-        down_data[2,:] = rand(Normal(Σ_down[2,1], Σ_down[2,2]), n_firms)
-        down_data[3,:] = rand(Normal(Σ_down[3,1], Σ_down[3,2]), n_firms)
+        down_data[1,:] = rand(Normal(Σ_down[1,1], sqrt(Σ_down[1,2])), n_firms)
+        down_data[2,:] = rand(Normal(Σ_down[2,1], sqrt(Σ_down[2,2])), n_firms)
+        down_data[3,:] = rand(Normal(Σ_down[3,1], sqrt(Σ_down[3,2])), n_firms)
     end
 
     #

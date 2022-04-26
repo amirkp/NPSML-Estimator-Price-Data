@@ -22,7 +22,7 @@ addprocs(23)
     # include("LP_DGP.jl")
 end
 @everywhere begin
-        n_firms=500
+        n_firms=250
 
 
     # @everywhere function replicate_byseed(n_rep)
@@ -126,12 +126,13 @@ function loglikepr(b)
      #             0 .1]
 
 
-    solve_draw =  x->sim_data_JV(bup, bdown , sig_up, sig_down, n_firms, 1234+x, true, up_data[1:2,:], down_data[1:2,:])
+    # solve_draw =  x->sim_data_JV(bup, bdown , sig_up, sig_down, n_firms, 1234+x, true, up_data[1:2,:], down_data[1:2,:])
+    solve_draw =  x->sim_data_JV_up_obs(bup, bdown , sig_up, sig_down, n_firms, 1234+x, true, up_data[1:2,:])
      # x->sim_data_like(up_data[1:2,:],bup, bdown , [2, 1., 1], [.5, 3, 1], n_firms, 1234+x, 2.5)
     sim_dat = pmap(solve_draw, 1:n_sim)
     ll=0.0
     # h=[0.4, 0.4, 1.2]
-    h=[0.04, 0.04, .06]
+    h=[0.2, 0.4, 1.]
 
     for j=1:n_sim
         pconst = mean(sim_dat[j][3])-mu_price
@@ -191,7 +192,7 @@ loglike_3p([1.,1.5,.5])
 res_1 = Optim.optimize(loglike_3p,rand(3) )
 
 
-bbo_search_range = (-3,3)
+bbo_search_range = (-5,5)
 bbo_population_size =50
 SMM_session =1
 bbo_max_time=86000
@@ -206,6 +207,7 @@ else
 end
 
 
+bbsolution1 = bboptimize(opt)
 
 
 ####April 21 2022
@@ -320,7 +322,7 @@ using CMAEvolutionStrategy
 
 
 
-res_CMAE = CMAEvolutionStrategy.minimize(loglikepr, rand(9), 1.)
+res_CMAE = CMAEvolutionStrategy.minimize(loglikepr, ones(9), 1.)
 res_CMAE = CMAEvolutionStrategy.minimize(loglikepr_upo, rand(9), 1.)
 
 res_CMAE = CMAEvolutionStrategy.minimize(loglikepr, [-0.084, 2.157, 0.782, 2.296, 2.129, -2.171, 1.467, -0.381, 0.582] , 1.)
