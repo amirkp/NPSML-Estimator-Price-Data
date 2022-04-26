@@ -1,7 +1,7 @@
 
 using Distributed
 addprocs(23)
-Pkg.add("BenchmarkTools")
+# Pkg.add("BenchmarkTools")
 using BenchmarkTools
 @everywhere begin
     using Optim
@@ -16,7 +16,7 @@ end
 @everywhere include("data_sim_like_2d_2d_match_only.jl")
 
 
-@everywhere n_firms=500
+@everywhere n_firms=100
 
 # @everywhere function replicate_byseed(n_rep)
 @everywhere begin
@@ -28,7 +28,7 @@ end
                 0 0 .5]
         B= bup+bdown
 
-    up_data, down_data, price_data_cf, tmat =
+    up_data, down_data, price_data_cf, tmat, bdiff=
         sim_data_like( -1, bup, bdown, [2, 1., 1.], [.5, 3, 1.], n_firms, 20, 2.5)
     mu_price = mean(price_data_cf)
 end
@@ -64,14 +64,14 @@ function loglikepr(b)
      solve_draw = x->sim_data_like(up_data[1:2,:],bup, bdown , [2, 1., 1], [.5, 3, 1], n_firms, 1234+x, 2.5)
     sim_dat = map(solve_draw, 1:n_sim)
     ll=0.0
-    h=[0.1, 0.2, 1.5]
+    h=[0.1, 0.1, .6]
 
     for j=1:n_sim
         pconst = mean(sim_dat[j][3])-mu_price
         sim_dat[j][3][:] = sim_dat[j][3] .+ pconst
     end
-
-    @floop begin
+    n_zeros=0
+    begin
         for i =1:n_firms
             like =0.
             for j =1:n_sim
@@ -81,27 +81,133 @@ function loglikepr(b)
                     *pdf(Normal(),((price_data_cf[i] - sim_dat[j][3][i])/h[3]))
                     )
             end
-            ll+=log(like/(n_sim*h[1]*h[2]*h[3]))
+            if like == 0
+                # println("Like is zero!!!")
+                ll+= -n_firms
+                n_zeros += 1
+            else
+                ll+=log(like/(n_sim*h[1]*h[2]*h[3]))
+            end
         end
     end
 
-    println("parameter: ", round.(b, digits=3), " function value: ", -ll/n_firms)
+
+    # println("parameter: ", round.(b, digits=3), " function value: ", -ll/n_firms, " Number of zeros: ", n_zeros)
     return -ll/n_firms
 end
 
+# @benchmark loglikepr(x) setup=(x=tpar+0.01*rand(9))
+
+loglikepr(tpar)
+
+loglikepr([-0.016, 1.602, 0.486, 2.504, 2.099, -1.963, 0.935, 1.746, -1.577])
+# foo = [-0.016, 1.602, 0.486, 2.504, 2.099, -1.963, 0.935, 1.746, -1.577]
+# using CMAEvolutionStrategy
+
+
+
+res_CMAE = CMAEvolutionStrategy.minimize(loglikepr, rand(9), 1.)
+
+
+
+Optim.optimize(loglikepr, rand(9))
+
+
 @benchmark loglikepr(x) setup=(x=tpar+0.01*rand(9))
 
 
 
 
 
+##############################
+##############################
+##############################
+##############################
+##############################
+##############################
+##############################
+##############################
+
+
+
+
+altpar = [-0.016, 1.602, 0.486, 2.504, 2.099, -1.963, 0.935, 1.746, -1.577]
+altpar=[-3.316, 0.456, 4.643, 1.685, -0.376, -1.52, 1.241, 3.665, -1.824]
+# altpar= copy(tpar)
+bup1 = [altpar[1] altpar[2] altpar[8];
+       altpar[3] altpar[4] 0;
+        0 0  0 ]
+bdown1 = [altpar[5] altpar[6] 0;
+        altpar[7]  0 0;
+        0 0 altpar[9]]
+B1= bup1+bdown1
+up_data1, down_data1, price_data_cf1, tmat1, bdiff1 =
+    sim_data_like( -1, bup1, bdown1, [2, 1., 1.], [.5, 3, 1.], n_firms, 20, 2.5)
+
+function loss(altpar)
+    bup1 = [altpar[1] altpar[2] altpar[8];
+           altpar[3] altpar[4] 0;
+            0 0  0 ]
+    bdown1 = [altpar[5] altpar[6] 0;
+            altpar[7]  0 0;
+            0 0 altpar[9]]
+    B1= bup1+bdown1
+    up_data1, down_data1, price_data_cf1, tmat1, bdiff1 =
+        sim_data_like( -1, bup1, bdown1, [2, 1., 1.], [.5, 3, 1.], n_firms, 20, 2.5)
+
+    return norm(down_data-down_data1) +norm(price_data_cf-price_data_cf1)
+    #
+     # + norm(bdiff- bdiff1)
+end
+
+
+
+loss(tpar)
+res_CMAE = CMAEvolutionStrategy.minimize(loss, -rand(10), 1.)
+
+res = Optim.optimize(loss, vcat(tpar,1.), BFGS(),Optim.Options(g_tol = 1e-12,
+                             iterations = 50,
+                             store_trace = true,
+                             show_trace = true))
+
+res = Optim.optimize(loss, vcat(tpar,1.),Optim.Options(g_tol = 1e-12,
+                              iterations = 50,
+                              store_trace = true,
+                              show_trace = true))
+Optim.minimizer(res)
+mu_price0 = mean(price_data_cf)
+mu_price1 = mean(price_data_cf1)
+
+var(down_data[3,:])
+var(down_data1[3,:])
+var(price_data_cf)
+var(price_data_cf1)
+cor(up_data[1,:],down_data[2,:])
+cor(up_data1[1,:],down_data1[2,:])
+
+cor(up_data[1,:],down_data[1,:])
+cor(up_data1[1,:],down_data1[1,:])
+
+cor(up_data1[2,:],price_data_cf1)
+cor(up_data[2,:],price_data_cf)
+
+
+
+##############################
+##############################
+##############################
+##############################
+##############################
+##############################
+##############################
+##############################
+##############################
+##############################
 
 
 
 
 
-
-@benchmark loglikepr(x) setup=(x=tpar+0.01*rand(9))
 
 
 

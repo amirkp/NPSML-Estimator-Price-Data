@@ -1,13 +1,13 @@
  # function sim_data_like(up_x, pup, pdown, sigup, sigdown, n_firms, sig_p,i)
-function sim_data_like(up_x, β_up,β_down, sigup, sigdown, n_firms, i, sig_p)
+function sim_data_like(up_x, β_up,β_down, sigup, sigdown, n_firms, i)
 
     A_mat = β_up + β_down
     β_diff = β_down - β_up
 
     Σ_up = zeros(3,3)
-    Σ_up[1,1]= sigup[1]; Σ_up[2,2]=sigup[2]; Σ_up[3,3] = sigup[3]
+    Σ_up[1,1]= (sigup[1]); Σ_up[2,2]=(sigup[2]); Σ_up[3,3] = (sigup[3])
     Σ_down = zeros(3,3)
-    Σ_down[1,1]= sigdown[1]; Σ_down[2,2]=sigdown[2];  Σ_down[3,3]=sigdown[3];
+    Σ_down[1,1]= (sigdown[1]); Σ_down[2,2]=(sigdown[2]);  Σ_down[3,3]=(sigdown[3]);
     if up_x == -1
         Random.seed!(1234+i)
         up_x = rand(MvNormal([0., 0.],Σ_up[1:2,1:2]), n_firms)
@@ -50,7 +50,8 @@ function sim_data_like(up_x, β_up,β_down, sigup, sigdown, n_firms, i, sig_p)
     # Data Generation
 
     Random.seed!(1234+i)
-    up_data = vcat(up_x, (rand(p_up, n_firms)[3,:])')
+    up_data= rand(MvNormal([0., 0., 0.],Σ_up), n_firms)
+    # up_data = vcat(up_x, (rand(p_up, n_firms)[3,:])')
     down_matched_data_cf = t_matrix*up_data
     down_data=copy(down_matched_data_cf)
     up_profit_data_cf = Float64[]
