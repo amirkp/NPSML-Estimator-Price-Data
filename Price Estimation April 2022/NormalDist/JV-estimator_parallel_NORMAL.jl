@@ -142,8 +142,7 @@ h = 2*abs.(Optim.minimizer(res_bcv))
 ################################################
 
 function loglike(b)
-    n_sim=100
-
+    n_sim=50
     bup = [
         vcat(b[1:2],b[8])';
         vcat(b[3:4], 0.)';
@@ -231,7 +230,7 @@ res_CMAE = CMAEvolutionStrategy.minimize(loglike, rand(9), 1.,
 # Estimated parameters: 
 est_pars = xbest(res_CMAE)
 
-2.93
+
 res_NM = Optim.optimize(loglike, est_pars)
 
 
