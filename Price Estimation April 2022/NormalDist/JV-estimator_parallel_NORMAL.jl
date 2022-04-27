@@ -553,7 +553,7 @@ up_data, down_data, price_data =
 
 bup1, bdown1, sigup1, sigdown1 = par_gen(est_pars)
 up_data1, down_data1, price_data1 =
-    sim_data_JV_Normal(bup1, bdown1, sigup1, sigdown1, n_firms, 1200, false, 0, 0)
+    sim_data_JV_Normal(bup1, bdown1, sigup1, sigdown1, n_firms, 200, false, 0, 0)
 
 
 p1= scatter(up_data[1,:], down_data[1,:])
