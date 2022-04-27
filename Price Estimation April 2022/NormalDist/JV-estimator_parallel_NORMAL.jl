@@ -46,7 +46,7 @@ end
 
         # Upstream coefficients
          bup = [
-                     1.     1.5    -1;
+                     -1.     1.5    -1;
                      .5     2.5     0;
                       0      0      0
                             ]
@@ -126,7 +126,7 @@ end
 # Optimize over choice of h
 res_bcv = Optim.optimize(bcv2_fun, rand(3))
 # res_bcv = Optim.optimize(bcv2_fun, rand(3),BFGS(),autodiff = :forward)
-h = 2*abs.(Optim.minimizer(res_bcv))
+h = abs.(Optim.minimizer(res_bcv))
 
 
 
@@ -202,7 +202,7 @@ end
 
 
 # Vector of true parameters
-tpar = [1, 1.5, .5, 2.5, 2.5, -2, 1, -1, .5 ]
+tpar = [-1, 1.5, .5, 2.5, 2.5, -2, 1, -1, .5 ]
 
 # Log-likelihood value at the truth
 loglike(tpar)
@@ -411,6 +411,11 @@ res_CMAE_vh = CMAEvolutionStrategy.minimize(loglike_varh, rand(9), 1.,
 est_pars = xbest(res_CMAE_vh)
 
 
+##########################
+##########################
+# END OF FINALIZED CODE ##
+##########################
+##########################
 
 
 @benchmark begin 
@@ -501,3 +506,60 @@ plot(p1,p2, markersize=1, legends = false)
 
 p1= scatter(up_data[1,:], price_data)
 p2 = scatter!(up_data1[1,:], price_data1, markersize = 3, color=:red)
+
+##########################
+##########################
+
+# function takes in the parameter vector returned by estimator
+# output: Parameter matrices
+
+up_data, down_data, price_data =
+    sim_data_JV_Normal(bup, bdown, sigup, sigdown, n_firms, 200, false, 0, 0)
+
+
+
+function par_gen(b)
+    bup = [
+        vcat(b[1:2],b[8])';
+        vcat(b[3:4], 0.)';
+        vcat(0 , 0, 0)'
+    ]
+
+
+    bdown = [
+        vcat(b[5], b[6],0)';
+        vcat(b[7], 0, 0)';
+        vcat(0 ,0., b[9] )'
+     ]
+     sig_up = [0 2.;
+                 0 1.;
+                 0 1.]
+
+
+     sig_down = [0 2.5;
+                 0 3.;
+                 0 1.]
+    return bup, bdown, sig_up, sig_down
+end
+
+
+
+n_firms = 2000
+
+
+up_data, down_data, price_data =
+    sim_data_JV_Normal(bup, bdown, sigup, sigdown, n_firms, 200, false, 0, 0)
+
+
+bup1, bdown1, sigup1, sigdown1 = par_gen(est_pars)
+up_data1, down_data1, price_data1 =
+    sim_data_JV_Normal(bup1, bdown1, sigup1, sigdown1, n_firms, 1200, false, 0, 0)
+
+
+p1= scatter(up_data[1,:], down_data[1,:])
+p2 = scatter(up_data1[1,:], down_data1[1,:], markersize = 3, color=:red)
+plot(p1,p2, markersize=1, legends = false)
+    
+p3= scatter(down_data[1,:], price_data )
+p4 = scatter(down_data1[1,:], price_data1, markersize = 3, color=:red)
+plot(p3,p4, markersize=3, legends = false)
