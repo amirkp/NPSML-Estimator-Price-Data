@@ -21,9 +21,11 @@ end
 
 @everywhere begin 
     n_reps =50 # Number of replications (fake datasets)
-    n_sim = 50
+    n_sim = 25
     true_pars = [-1, 1.5, .5, 2.5, 2.5, -2, 1, -1, .5 ]
 end
+
+
 
 
 @everywhere function replicate_byseed(n_rep, n_firms)
@@ -185,13 +187,13 @@ end
 
 # Parameter estimates 
 
-for n_firms = 100:100:500
+for n_firms = 100:100:300
     est_pars = pmap(x->replicate_byseed(x, n_firms),1:n_reps)
 
     estimation_result = Dict()
     push!(estimation_result, "beta_hat" => est_pars)
     push!(estimation_result, "beta" => true_pars)
-    bson("NormalDist/MC/MC_100_nf_$n_firms.bson", estimation_result)
+    bson("NormalDist/MC/MC_50_nf_$n_firms.bson", estimation_result)
 end
 
 
