@@ -96,7 +96,7 @@ end
             m=2
             yy = [sim_dat[s][2][1,i] for s=1:n_sim]
             pp = [sim_dat[s][5][i] for s=1:n_sim]
-            S=cov([yy pp])
+            S=cov(vcat())
             H_Silverman = (4/(n_firms*(m+2)))^(2/(m+4)) * S
             
 

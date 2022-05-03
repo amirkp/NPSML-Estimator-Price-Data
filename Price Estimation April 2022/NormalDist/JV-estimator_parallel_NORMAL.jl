@@ -128,6 +128,16 @@ res_bcv = Optim.optimize(bcv2_fun, rand(3))
 # res_bcv = Optim.optimize(bcv2_fun, rand(3),BFGS(),autodiff = :forward)
 h = abs.(Optim.minimizer(res_bcv))
 
+#################################
+#################################
+######### Silverman #############
+#################################
+
+n_sim =50
+m=3
+S=cov(hcat(down_data[1,:], down_data[2,:], price_data))
+H_Silverman = (4/(n_sim*(m+2)))^(2/(m+4)) * S
+@show h= sqrt.(diag(H_Silverman))
 
 
 

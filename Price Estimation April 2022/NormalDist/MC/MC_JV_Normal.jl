@@ -20,15 +20,15 @@ addprocs(24)    # Cores -1 (This is for #444 Mac Pro)
 end
 
 @everywhere begin 
-    n_reps =50 # Number of replications (fake datasets)
-    n_sim = 25
+    n_reps = 24 # Number of replications (fake datasets)
+    n_sim =50
     true_pars = [-1, 1.5, .5, 2.5, 2.5, -2, 1, -1, .5 ]
 end
 
 
 
 
-@everywhere function replicate_byseed(n_rep, n_firms)
+@everywhere function replicate_byseed(n_rep, n_firms, n_sim )
 
     Σ_up = [ 
         0 2.;
@@ -105,8 +105,8 @@ end
     # Silverman
     m=3
     S=cov(hcat(down_data[1,:], down_data[2,:], price_data))
-    H_Silverman = (4/(n_sim*(m+2)))^(2/(m+4)) * S
-    @show h= sqrt.(diag(H_Silverman))
+    H_Silverman = (4/(n_sim*n_firms*(m+2)))^(2/(m+4)) * S
+    @show h= 0.25 .* sqrt.(diag(H_Silverman))
     function loglike(b)
         
         bup = [
@@ -158,45 +158,187 @@ end
     end
 
 
-    res_CMAE = CMAEvolutionStrategy.minimize(loglike, rand(9), 1.,
-    lower = nothing,
-    upper = nothing,
-    noise_handling = nothing,
-    callback = (object, inputs, function_values, ranks) -> nothing,
-    parallel_evaluation = false,
-    multi_threading = false,
-    verbosity = 1,
-    seed = rand(UInt),
-    maxtime = 1000,
-    maxiter = nothing,
-    maxfevals = nothing,
-    ftarget = nothing,
-    xtol = nothing,
-    ftol = 1e-3)
+    # res_CMAE = CMAEvolutionStrategy.minimize(loglike, rand(9), 1.,
+    #     lower = nothing,
+    #     upper = nothing,
+    #     noise_handling = nothing,
+    #     callback = (object, inputs, function_values, ranks) -> nothing,
+    #     parallel_evaluation = false,
+    #     multi_threading = false,
+    #     verbosity = 1,
+    #     seed = rand(UInt),
+    #     maxtime = (n_firms/100)*1000,
+    #     maxiter = nothing,
+    #     maxfevals = nothing,
+    #     ftarget = nothing,
+    #     xtol = nothing,
+    #     ftol = 1e-3)
 
 
 
-    # Estimated parameters: 
-    return xbest(res_CMAE)
+    # # Estimated parameters: 
+    # println("Best Cand:  " ,xbest(res_CMAE))
+    # return xbest(res_CMAE), fbest(res_CMAE)
+    # opt = bbsetup(loglike; SearchRange = bbo_search_range, NumDimensions =bbo_ndim,  Method = :simultaneous_perturbation_stochastic_approximation, MaxTime = bbo_max_time)
+
+    # bbsolution = bboptimize(opt)
+
+    bbo_search_range = (-5,5)
+    bbo_population_size =50
+    SMM_session =1
+    bbo_max_time=44000
+    bbo_ndim = 9
+
+    # if SMM_session == 1
+    #     # Set up the solver for the first session of optimization
+    #     opt = bbsetup(loglikepr; SearchRange = bbo_search_range, NumDimensions =bbo_ndim, PopulationSize = bbo_population_size, Method = :adaptive_de_rand_1_bin_radiuslimited, MaxTime = bbo_max_time)
+    # else
+    #     # Load the optimization progress to restart the optimization
+    #     # opt = BSON.load(dir_bbo_previous)["opt"]
+    # end
+    opt = bbsetup(loglike; SearchRange = bbo_search_range, NumDimensions =bbo_ndim, PopulationSize = bbo_population_size, Method = :adaptive_de_rand_1_bin_radiuslimited, MaxTime = bbo_max_time)
 
 
+    bbsolution1 = bboptimize(opt)
+    return bbsolution1
 
 end
 
 
 
 # Parameter estimates 
-
-for n_firms = 100:100:300
-    est_pars = pmap(x->replicate_byseed(x, n_firms),1:n_reps)
-
-    estimation_result = Dict()
-    push!(estimation_result, "beta_hat" => est_pars)
-    push!(estimation_result, "beta" => true_pars)
-    bson("NormalDist/MC/MC_50_nf_$n_firms.bson", estimation_result)
+for n_sim =25:25:50
+    for n_firms = 400:100:500
+        est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim),1:n_reps)
+        estimation_result = Dict()
+        push!(estimation_result, "beta_hat" => est_pars)
+        push!(estimation_result, "beta" => true_pars)
+        bson("NormalDist/MC/03/MC_nf_$(n_firms)_sim_$(n_sim).bson", estimation_result)
+    end
 end
 
 
 
 
-estimation_result
+
+########################################
+########################################
+##### Comparing the results ############
+########################################
+########################################
+
+
+est_matrix = Array{Float64, 3}(undef, 5, n_reps, 10)
+
+
+for j = 1:5
+    for i = 1:n_reps
+        tmp_est = BSON.load("NormalDist/MC/02/MC_nf_$((j)*100)_sim_75.bson")
+        est_matrix[j,i,:] = vcat(tmp_est["beta_hat"][i][1][:], tmp_est["beta_hat"][i][2]  )
+        est_matrix[j,i,8:9]=abs.(est_matrix[j,i,8:9])
+    end
+end
+
+
+mse_vec = zeros(5, 10)
+bias_vec = zeros(5,10)
+true_pars[8:9] = abs.(true_pars[8:9])
+true_pars= vcat(true_pars, 0 )
+
+for j = 1:5 
+    for i = 1: n_reps
+        mse_vec[j,:] += (est_matrix[j,i,:] - true_pars).^2/n_reps
+        bias_vec[j,:] += (est_matrix[j,i,:] - true_pars)/n_reps
+        est_matrix[j,i,8:9]=abs.(est_matrix[j,i,8:9])
+    end
+    
+end
+
+sqrt.(mse_vec)
+bias_vec
+
+
+
+############# Spec 2
+
+est_matrix2 = Array{Float64, 3}(undef, 3, n_reps, 9)
+
+
+for j = 1:3
+    for i = 1: n_reps
+        tmp_est, tpar = BSON.load("NormalDist/MC/MC_half_$(j*100)_sim_$(25 +0*(j-1)*25).bson")
+        est_matrix2[j,i,:] = tmp_est[2][i][:]
+        est_matrix2[j,i,8:9]=abs.(est_matrix[j,i,8:9])
+    end
+end
+
+
+mse_vec2 = zeros(5, 9)
+bias_vec2 = zeros(5,9)
+true_pars[8:9] = abs.(true_pars[8:9])
+
+for j = 1:3
+    for i = 1: n_reps
+        mse_vec2[j,:] += (est_matrix2[j,i,:] - true_pars).^2/n_reps
+        bias_vec2[j,:] += (est_matrix2[j,i,:] - true_pars)/n_reps
+    end
+    
+end
+
+sqrt.(mse_vec2)
+bias_vec2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function est_performance(est_matrix, true_pars)
+    rmse = zeros(9)
+    bias = zeros(9)
+    est_matrix[:,8:9] = abs.(est_matrix[:,8:9])
+
+    true_pars[8:9] = abs.(true_pars[8:9])
+    for i = 1:n_reps
+        rmse += (true_pars - est_matrix[i,:]).^2/n_reps 
+        bias += (true_pars - est_matrix[i,:])/n_reps
+    end
+    rmse = sqrt.(rmse)
+    return rmse, bias
+
+end
+
+
+
+rmse50, bias50 = est_performance(est_matrix, true_pars)
+rmse50_300, bias50_300 = est_performance(est_matrix, true_pars)
+
+scatter(est_matrix[:,1])
+
+
+mean(est_matrix[:,7])
+bias50
+
+
+
+
+#######
+
+est_matrix= BSON.load("NormalDist/MC/02/MC_nf_400_sim_75.bson")
+
+opt_vec = est_matrix["beta_hat"]
+
+
+[opt_vec[i][:] for i = 1:24]
+
+best_candidate.(opt_vec[:])
+best_fitness.(opt_vec[:])
