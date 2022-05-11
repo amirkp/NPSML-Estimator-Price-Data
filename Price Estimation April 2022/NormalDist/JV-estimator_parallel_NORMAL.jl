@@ -137,6 +137,7 @@ n_sim =50
 m=3
 S=cov(hcat(down_data[1,:], down_data[2,:], price_data))
 H_Silverman = (4/(n_sim*(m+2)))^(2/(m+4)) * S
+
 @show h= sqrt.(diag(H_Silverman))
 
 
@@ -219,21 +220,21 @@ loglike(tpar)
 
 
 
-res_CMAE = CMAEvolutionStrategy.minimize(loglike, rand(9), 1.,
-        lower = nothing,
-         upper = nothing,
-         noise_handling = nothing,
-         callback = (object, inputs, function_values, ranks) -> nothing,
-         parallel_evaluation = false,
-         multi_threading = false,
-         verbosity = 1,
-         seed = rand(UInt),
-         maxtime = 1000,
-         maxiter = nothing,
-         maxfevals = nothing,
-         ftarget = nothing,
-         xtol = nothing,
-         ftol = 1e-3)
+# res_CMAE = CMAEvolutionStrategy.minimize(loglike, rand(9), 1.,
+#         lower = nothing,
+#          upper = nothing,
+#          noise_handling = nothing,
+#          callback = (object, inputs, function_values, ranks) -> nothing,
+#          parallel_evaluation = false,
+#          multi_threading = false,
+#          verbosity = 1,
+#          seed = rand(UInt),
+#          maxtime = 1000,
+#          maxiter = nothing,
+#          maxfevals = nothing,
+#          ftarget = nothing,
+#          xtol = nothing,
+#          ftol = 1e-3)
 
 
 
