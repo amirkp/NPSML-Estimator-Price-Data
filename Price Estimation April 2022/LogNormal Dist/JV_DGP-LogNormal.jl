@@ -1,5 +1,5 @@
 #LOG NORMAL DGP
-function sim_data_JV_LogNormal(β_up, β_down, Σ_up, Σ_down, n_firms,i, flag, obs_up, obs_down)
+function sim_data_JV_LogNormal(β_up, β_down, Σ_up, Σ_down, n_firms,i, flag, obs_up, obs_down, d_min_prof_input)
     if flag == false
 
         up_data = Array{Float64, 2}(undef, 3, n_firms)
@@ -43,17 +43,20 @@ function sim_data_JV_LogNormal(β_up, β_down, Σ_up, Σ_down, n_firms,i, flag, 
     end
 
 
-    up_valuation = diag(up_data'*β_up*down_match_data)
-    up_prices = up_profit_data - up_valuation
+    d_min_prof = findmin(down_match_profit_data)[1]
 
-    down_valuation = diag(up_data'*β_down*down_match_data)
+    profit_diff = d_min_prof_input - d_min_prof
+    down_match_profit_data .= down_match_profit_data .+ profit_diff
 
-    return up_data, down_match_data, up_prices, up_profit_data, 
-        down_match_profit_data,up_valuation, down_valuation
+    down_valuation = diag(up_data'*β_down*down_match_data) 
+    down_prices = down_valuation - down_match_profit_data 
+
+
+    return up_data, down_match_data, down_prices, up_profit_data, down_match_profit_data
 end
 
 
-function sim_data_JV_up_obs(β_up, β_down, Σ_up, Σ_down, n_firms,i, flag, obs_up)
+function sim_data_JV_up_obs(β_up, β_down, Σ_up, Σ_down, n_firms,i, flag, obs_up, d_min_prof_input)
     
     if flag == false
         up_data = Array{Float64, 2}(undef, 3, n_firms)
@@ -99,9 +102,17 @@ function sim_data_JV_up_obs(β_up, β_down, Σ_up, Σ_down, n_firms,i, flag, obs
         down_match_profit_data[i] = down_profit_data[match[i][2]]
     end
 
+    d_min_prof = findmin(down_match_profit_data)[1]
 
-    up_valuation = diag(up_data'*β_up*down_match_data)
-    up_prices = up_profit_data - up_valuation
+    profit_diff = d_min_prof_input - d_min_prof
+    down_match_profit_data .= down_match_profit_data .+ profit_diff
 
-    return up_data, down_match_data, up_prices, up_profit_data, down_match_profit_data
+    down_valuation = diag(up_data'*β_down*down_match_data) 
+    down_prices = down_valuation - down_match_profit_data 
+
+    # up_valuation = diag(up_data'*β_up*down_match_data)
+    # up_prices = up_profit_data - up_valuation
+
+    # return up_data, down_match_data, up_prices, up_profit_data, down_match_profit_data
+    return up_data, down_match_data, down_prices, up_profit_data, down_match_profit_data
 end

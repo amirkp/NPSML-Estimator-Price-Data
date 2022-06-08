@@ -1,4 +1,4 @@
-function sim_data_JV_Normal(β_up::AbstractMatrix{T}, β_down::AbstractMatrix{T}, Σ_up, Σ_down, n_firms,i, flag, obs_up, obs_down) where T
+function sim_data_JV_Normal(β_up::AbstractMatrix{T}, β_down::AbstractMatrix{T}, Σ_up, Σ_down, n_firms,i, flag, obs_up, obs_down, d_min_prof_input) where T
     if flag == false
 
         up_data = Array{Float64, 2}(undef, 3, n_firms)
@@ -42,16 +42,27 @@ function sim_data_JV_Normal(β_up::AbstractMatrix{T}, β_down::AbstractMatrix{T}
     end
 
     # down_match_profit_data =  Array{T, 1}(undef, n_firms)
-    down_match_profit_data = zeros(T, 3, n_firms)
+    down_match_profit_data = zeros(T, n_firms)
     for i=1:n_firms
         down_match_profit_data[i] = down_profit_data[match[i][2]]
     end
 
 
-    up_valuation = diag(up_data'*β_up*down_match_data)
-    up_prices = up_profit_data - up_valuation
+    # up_valuation = diag(up_data'*β_up*down_match_data)
+    # up_prices = up_profit_data - up_valuation
 
-    return up_data, down_match_data, up_prices
+    d_min_prof = findmin(down_match_profit_data)[1]
+
+    profit_diff = d_min_prof_input - d_min_prof
+    down_match_profit_data .= down_match_profit_data .+ profit_diff
+
+    down_valuation = diag(up_data'*β_down*down_match_data) 
+    down_prices = down_valuation - down_match_profit_data 
+
+
+    # return up_data, down_match_data, up_prices
+    return up_data, down_match_data, down_prices, up_profit_data, down_match_profit_data
+
     # , up_profit_data, down_match_profit_data
 end
 #

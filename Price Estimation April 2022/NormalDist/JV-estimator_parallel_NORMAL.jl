@@ -11,7 +11,7 @@
 # package for parallel computation
 using Distributed
 using FLoops
-addprocs(23)    # Cores -1 (This is for #444 Mac Pro)
+addprocs(24)    # Cores -1 (This is for #444 Mac Pro)
 
 @everywhere using Optim    # Nelder-Mead Local Optimizer
 @everywhere using CMAEvolutionStrategy # Global Optimizer
@@ -79,8 +79,8 @@ end
 
     # The last three args are used when simulating markets with pre-determined observed types
     # i.e. The observed types are passed on as arguments, only the unobservables are drawn from the distribution
-    up_data, down_data, price_data =
-        sim_data_JV_Normal(bup, bdown, sigup, sigdown, n_firms, 23, false, 0, 0)
+    up_data, down_data, price_data, up_profit, down_profit =
+        sim_data_JV_Normal(bup, bdown, sigup, sigdown, n_firms, 23, false, 0, 0,1.)
 
     # mean of transfers in the data
     mu_price = mean(price_data)
@@ -126,19 +126,19 @@ end
 # Optimize over choice of h
 res_bcv = Optim.optimize(bcv2_fun, rand(3))
 # res_bcv = Optim.optimize(bcv2_fun, rand(3),BFGS(),autodiff = :forward)
-h = abs.(Optim.minimizer(res_bcv))
+h = 0.5 *abs.(Optim.minimizer(res_bcv))
 
 #################################
 #################################
 ######### Silverman #############
 #################################
 
-n_sim =50
-m=3
-S=cov(hcat(down_data[1,:], down_data[2,:], price_data))
-H_Silverman = (4/(n_sim*(m+2)))^(2/(m+4)) * S
+# n_sim =50
+# m=3
+# S=cov(hcat(down_data[1,:], down_data[2,:], price_data))
+# H_Silverman = (4/(n_sim*(m+2)))^(2/(m+4)) * S
 
-@show h= sqrt.(diag(H_Silverman))
+# @show h= sqrt.(diag(H_Silverman))
 
 
 
@@ -176,16 +176,16 @@ function loglike(b)
                  0 1.]
 
 
-    solve_draw =  x->sim_data_JV_Normal(bup, bdown , sig_up, sig_down, n_firms, 1234+x, true, up_data[1:2,:], down_data[1:2,:])
+    solve_draw =  x->sim_data_JV_Normal(bup, bdown , sig_up, sig_down, n_firms, 1234+x, true, up_data[1:2,:], down_data[1:2,:],b[10])
      # x->sim_data_like(up_data[1:2,:],bup, bdown , [2, 1., 1], [2.5, 3, 1], n_firms, 1234+x, 2.5)
     sim_dat = pmap(solve_draw, 1:n_sim)
     ll=0.0
     # mu_price = b[10]
 
-    for j=1:n_sim
-        pconst = mean(sim_dat[j][3])-mu_price
-        sim_dat[j][3][:] = sim_dat[j][3] .+ pconst
-    end
+    # for j=1:n_sim
+    #     pconst = mean(sim_dat[j][3])-mu_price
+    #     sim_dat[j][3][:] = sim_dat[j][3] .+ pconst
+    # end
     n_zeros = 0
     for i =1:n_firms
         like =0.
@@ -213,28 +213,31 @@ end
 
 
 # Vector of true parameters
-tpar = [-1, 1.5, .5, 2.5, 2.5, -2, 1, -1, .5 ]
+tpar = [-1, 1.5, .5, 2.5, 2.5, -2, 1, -1, .5, -0.5 ]
 
 # Log-likelihood value at the truth
 loglike(tpar)
+xrange=-2:0.1:2
+plot(xrange, [loglike(vcat(tpar[1:9],xrange[i])) for i =1:length(xrange)])
 
 
 
-# res_CMAE = CMAEvolutionStrategy.minimize(loglike, rand(9), 1.,
-#         lower = nothing,
-#          upper = nothing,
-#          noise_handling = nothing,
-#          callback = (object, inputs, function_values, ranks) -> nothing,
-#          parallel_evaluation = false,
-#          multi_threading = false,
-#          verbosity = 1,
-#          seed = rand(UInt),
-#          maxtime = 1000,
-#          maxiter = nothing,
-#          maxfevals = nothing,
-#          ftarget = nothing,
-#          xtol = nothing,
-#          ftol = 1e-3)
+
+res_CMAE = CMAEvolutionStrategy.minimize(loglike, rand(10), 1.,
+        lower = nothing,
+         upper = nothing,
+         noise_handling = nothing,
+         callback = (object, inputs, function_values, ranks) -> nothing,
+         parallel_evaluation = false,
+         multi_threading = false,
+         verbosity = 1,
+         seed = rand(UInt),
+         maxtime = 1000,
+         maxiter = nothing,
+         maxfevals = nothing,
+         ftarget = nothing,
+         xtol = nothing,
+         ftol = 1e-3)
 
 
 

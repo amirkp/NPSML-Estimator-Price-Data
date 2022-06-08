@@ -4,7 +4,7 @@
 using Distributed
 using BSON
 # using FLoops
-addprocs(24)    # Cores -1 (This is for #444 Mac Pro)
+addprocs(24)    # Cores  (This is for #444 Mac Pro)
 @everywhere using Optim    # Nelder-Mead Local Optimizer
 @everywhere using CMAEvolutionStrategy # Global Optimizer
 
@@ -128,10 +128,11 @@ end
         sim_dat = map(solve_draw, 1:n_sim)
         ll=0.0
 
-        for j=1:n_sim
-            pconst = mean(sim_dat[j][3])-mu_price
-            sim_dat[j][3][:] = sim_dat[j][3] .+ pconst
-        end
+        # for j=1:n_sim
+        #     pconst = mean(sim_dat[j][3])-mu_price
+        #     sim_dat[j][3][:] = sim_dat[j][3] .+ pconst
+        # end
+        
         n_zeros = 0
         for i =1:n_firms
             like =0.
