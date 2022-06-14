@@ -159,7 +159,6 @@ function loglike(b)
 
 
     n_zeros = 0
-            like+=(
     # for i =1:n_firms
     #     like =0.
     #     for j =1:n_sim
