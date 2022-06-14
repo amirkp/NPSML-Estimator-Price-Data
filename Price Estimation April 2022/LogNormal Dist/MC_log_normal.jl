@@ -1,7 +1,13 @@
-using BSON
+### Monte-Carlo -- NPSML estimator -- Normally Distributed
+### Simulation using finite market approximation. 
+# package for parallel computation
 using Distributed
-addprocs(23)
-@everywhere using Optim
+using BSON
+# using FLoops
+addprocs(24)    # Cores  (This is for #444 Mac Pro)
+@everywhere using Optim    # Nelder-Mead Local Optimizer
+@everywhere using CMAEvolutionStrategy # Global Optimizer
+
 @everywhere begin
     using LinearAlgebra
     using Random
@@ -9,825 +15,781 @@ addprocs(23)
     using BlackBoxOptim
     using Plots
     using Assignment
-    using Gurobi
-    using CMAEvolutionStrategy
-    using JuMP
     using BenchmarkTools
     include("JV_DGP-LogNormal.jl")
-    include("LP_DGP.jl")
-    using FiniteDifferences
+    using Evolutionary
+    # include("LP_DGP.jl")
 end
-# @benchmark sim_data_JV_LogNormal(bup, bdown, sig_up, sig_down, n_firms, 36, false, 0, 0)
-
 
 @everywhere begin 
     n_reps = 24 # Number of replications (fake datasets)
-    n_sim =50
-    true_pars =  [-2.5, -.5, -.5, -.5, 3.5, 1.5, 1.5, 1, 1]
+    # n_sim =25
+    true_pars = [-2.5, 1.5, -.5, -.5, 3.5, 1.5, 1.5, 1, 1, 3.]
 end
 
-@everywhere function replicate_byseed(n_rep, n_firms, n_sim,bb)
-
-        bup = [-2.5 -.5 1;
-            -.5 -.5 0;
-            0 0  0 ]
-        bdown = [3.5 1.5 0;
-                1.5  0 0;
-                0 0 1.]
-        B= bup+bdown
-
-        sig_up = [0 .1;
-                    0 .2;
-                    0 .1]
-        sig_down = [0 .3;
-                    0 .1;
-                    0 .4]
-    up_data, down_data, price_data = sim_data_JV_LogNormal(bup, bdown, sig_up, sig_down, n_firms, 36+n_rep, false, 0, 0)
-    # up1, down1, price1 =sim_data_LP(bup, bdown, sig_up, sig_down, n_firms,36)
-    mu_price = mean(price_data)
-    # mu_price1 = mean(price1)
-    tpar = [-2.5, -.5, -.5, -.5, 3.5, 1.5, 1.5, 1, 1]
 
 
 
-        ########################
-        ########################
-        ###### BANDWIDTH ######
-        ########################
-        ########################
-        ########################
+@everywhere function replicate_byseed(n_rep, n_firms, n_sim)
 
-        function bcv2_fun(h)
-            h=abs.(h)
-            ll = 0.0
-            for i = 1:n_firms
-                for j=1:n_firms
-                    if (j!=i)
-                        expr_1 = ((down_data[1,i]-down_data[1,j])/h[1])^2 + ((down_data[2,i]-down_data[2,j])/h[2])^2 + ((price_data[i]-price_data[j])/h[3])^2
-                        expr_2 = pdf(Normal(),(down_data[1,i]-down_data[1,j])/h[1]) * pdf(Normal(),((down_data[2,i]-down_data[2,j])/h[2])) * pdf(Normal(),((price_data[i]-price_data[j])/h[3]))
-                        ll += (expr_1 - (2*3 +4)*expr_1 + (3^2 +2*3))*expr_2
-                    end
+    Σ_up = [0 .1;
+            0 .2;
+            0 .1]
+
+
+    Σ_down =  [0 .3;
+               0 .4;
+               0 .1]
+
+    #      [β11u, β12u, β21u, β11u, β11d, β12d, β21u, β13u, β33d]
+
+
+    function par_gen(b)
+        bup = [
+            vcat(b[1:2],b[8])';
+            vcat(b[3:4], 0.)';
+            vcat(0 , 0, 0)'
+        ]
+
+
+        bdown = [
+            vcat(b[5], b[6],0)';
+            vcat(b[7], 0, 0)';
+            vcat(0 ,0., b[9] )'
+        ]
+
+        return bup, bdown
+    end
+
+
+    bup, bdown = par_gen(true_pars)
+    up_data, down_data, price_data =
+        sim_data_JV_LogNormal(bup, bdown, Σ_up, Σ_down, n_firms, 38+n_rep, false, 0, 0, 3.)
+    # println("hi after fake data")
+    # mean of transfers in the data
+    # mu_price = mean(price_data)
+
+
+
+    # # h: vector of bandwidths
+    # # function to be minimized over the choice of h
+    # # function uses the fake data above
+    function bcv2_fun(h, down_data, price_data)
+        h=abs.(h)
+        ll = 0.0
+        n_firms = length(price_data)
+        for i = 1:n_firms
+            for j=1:n_firms
+                if (j!=i)
+                    expr_1 = ((down_data[1,i]-down_data[1,j])/h[1])^2 + ((down_data[2,i]-down_data[2,j])/h[2])^2 + ((price_data[i]-price_data[j])/h[3])^2
+                    expr_2 = pdf(Normal(),(down_data[1,i]-down_data[1,j])/h[1]) * pdf(Normal(),((down_data[2,i]-down_data[2,j])/h[2])) * pdf(Normal(),((price_data[i]-price_data[j])/h[3]))
+                    ll += (expr_1 - (2*3 +4)*expr_1 + (3^2 +2*3))*expr_2
                 end
             end
-            val = ((sqrt(2*pi))^3 * n_firms *h[1]*h[2]*h[3])^(-1) +
-                                    ((4*n_firms*(n_firms-1))*h[1]*h[2]*h[3])^(-1) * ll
-            # println("band: ",h," val: ", val)
-            return val
         end
+        val = ((sqrt(2*pi))^3 * n_firms *h[1]*h[2]*h[3])^(-1) +
+                                ((4*n_firms*(n_firms-1))*h[1]*h[2]*h[3])^(-1) * ll
+        # println("band: ",h," val: ", val)
+        return val
+    end
 
-        # bcv2_fun([-.1, 1.0, 1.])
+    # # only use a sample of size of the nsims not the total observed sample 
+    # inds = rand(1:n_firms, n_sim)
+    inds = 1:n_firms
+    # # Optimize over choice of h
+    res_bcv = Optim.optimize(x->bcv2_fun(x,down_data[1:2,inds],price_data[inds]), [0.1,.1,.1])
+    # # res_bcv = Optim.optimize(bcv2_fun, [0.1,.1,.1])
+    @show h = abs.(Optim.minimizer(res_bcv))
+    # h[2] = h[2]/2
+    h[3] = h[3]/2
+    # h =[0.01, 0.2, 0.07]
+    # # Silverman
+    # m=3
+    # S=cov(hcat(down_data[1,:], down_data[2,:], price_data))
+    # H_Silverman = (4/(n_sim*n_firms*(m+2)))^(2/(m+4)) * S
+    # @show h= 0.25 .* sqrt.(diag(H_Silverman))
+
+    # println("hi before function")
+    println("hi", n_sim)
+    function loglike(b)
+        # n_sim=50
+        
+    
+        bup = [
+            vcat(b[1:2], abs(b[8]))';
+            vcat(b[3:4], 0.)';
+            vcat(0 , 0, 0)'
+        ]
+    
+        bdown = [
+            vcat(b[5], b[6],0)';
+            vcat(b[7], 0, 0)';
+            vcat(0 ,0., abs(b[9]) )'
+         ]
+    
+        # bup = [
+        #     vcat(b[1:2], 1.)';
+        #     vcat(b[3:4], 0.)';
+        #     vcat(0 , 0, 0)'
+        # ]
+    
+        # bdown = [
+        #     vcat(b[5], b[6],0)';
+        #     vcat(b[7], 0, 0)';
+        #     vcat(0 ,0., 1. )'
+        #  ]
+    
+        solve_draw =  x->sim_data_JV_up_obs(bup, bdown , Σ_up, Σ_down, n_firms, 360+x, true, up_data[1:2,:],3.)
+    
+        sim_dat = map(solve_draw, 1:n_sim)
+        # sim_dat = solve_draw.(1:n_sim)
+        # sim_dat = solve_draw.(1:n_sim)
+        # sim_dat = []
+        # for i = 1:n_sim
+        #     push!(sim_dat, solve_draw(i))
+        # end
 
 
-        # Optimize over choice of h
-        res_bcv = Optim.optimize(bcv2_fun, [0.03,0.03,0.08])
-        # res_bcv = Optim.optimize(bcv2_fun, rand(3),BFGS(),autodiff = :forward)
-        @show h = abs.(Optim.minimizer(res_bcv))
+
         
 
+        ll=0.0
+        n_zeros = 0
+        for i =1:n_firms
+            like =0.
+            for j =1:n_sim
+                like+=(
+                    pdf(Normal(),((down_data[1,i] - sim_dat[j][2][1,i])/h[1]))
+                    *pdf(Normal(),((down_data[2,i] - sim_dat[j][2][2,i])/h[2]))
+                    *pdf(Normal(),((price_data[i] - sim_dat[j][3][i])/h[3]))
+                    )
+            end
+            # println("like is: ", like, " log of which is: ", log(like/(n_sim*h[1]*h[2]*h[3])))
+            if like == 0
+            #     # println("Like is zero!!!")
+                ll+= -n_firms
+                n_zeros += 1
+            else
+                ll+=log(like/(n_sim*h[1]*h[2]*h[3]))
+                # ll+=like
+            end
+    
+    
+        end
+        if mod(time(),10)<0.1
+            println("parameter: ", round.(b, digits=3), " function value: ", -ll/n_firms, " Number of zeros: ", n_zeros)
+        end
+
+        return -ll/n_firms
+    end
+
+    # # return loglike(vcat(true_pars, 1))
+    # res_CMAE = CMAEvolutionStrategy.minimize(loglike, rand(9), 1.,
+    #     lower = nothing,
+    #     upper = nothing,
+    #     noise_handling = nothing,
+    #     callback = (object, inputs, function_values, ranks) -> nothing,
+    #     parallel_evaluation = false,
+    #     multi_threading = false,
+    #     verbosity = 1,
+    #     seed = rand(UInt),
+    #     maxtime = (n_firms/100)*1000,
+    #     maxiter = nothing,
+    #     maxfevals = 20000,
+    #     ftarget = nothing,
+    #     xtol = nothing,
+    #     ftol = 1e-4)
+    # res = Evolutionary.optimize(loglike, rand(9), CMAES())
+    # return Evolutionary.minimizer(res), Evolutionary.minimum(res)
 
 
-        #################################
-        #################################
-        ######### Silverman #############
-        #################################
 
-        # n_sim =50
-        # m=3
-        # S=cov(hcat(down_data[1,:], down_data[2,:], price_data))
-        # H_Silverman = (4/(n_sim*(m+2)))^(2/(m+4)) * S
+    # # # Estimated parameters: 
+    # println("Best Cand:  " ,xbest(res_CMAE))
+    # return xbest(res_CMAE), fbest(res_CMAE), h 
+    # opt = bbsetup(loglike; SearchRange = bbo_search_range, NumDimensions =bbo_ndim,  Method = :simultaneous_perturbation_stochastic_approximation, MaxTime = bbo_max_time)
 
-        # @show h= sqrt.(diag(H_Silverman))
-        # h = [.2,.2,.2]
-        # # h = h/5
-        ########################
-        ##################
-        #### MAIN LIKELIHOOD FUNCTION
-        #############
-        ######################
-        ###################
-        function loglike(b)
-            n_sim=50
-
-            # bup = [
-            #     vcat(b[1:2], b[5])';
-            #     vcat(b[3:4]  , 0.)';
-            #     vcat(0 , 0, 0)'
-            # ]
+    # bbsolution = bboptimize(opt)
 
 
+    bbo_search_range = (-5,5)
+    bbo_population_size =50
+    bbo_max_time=3600*(n_firms/100)
+    bbo_ndim = 9
+    bbo_feval = 30000
+
+    # opt = bbsetup(loglike; SearchRange = bbo_search_range, 
+    #   NumDimensions =bbo_ndim, PopulationSize = bbo_population_size, 
+    #   Method = :adaptive_de_rand_1_bin_radiuslimited, MaxFuncEvals = bbo_feval,
+    #   TraceInterval=10.0, TraceMode=:compact)
+
+
+    bbsolution1 = bboptimize(loglike; SearchRange = bbo_search_range, 
+        NumDimensions =bbo_ndim, PopulationSize = bbo_population_size, 
+        Method = :adaptive_de_rand_1_bin_radiuslimited, MaxFuncEvals = bbo_feval,
+        TraceInterval=60.0, TraceMode=:compact, Workers=[myid()]) 
+    return bbsolution1
+end
+
+# replicate_byseed(2, 100,25) 
+
+# Parameter estimates 
+for n_sim =25:25:25
+    for n_firms = 100:100:100
+        est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim),1:n_reps)
+        estimation_result = Dict()
+        push!(estimation_result, "beta_hat" => est_pars)
+        bson("LogNormal Dist/MC/04/est_abs_$(n_firms)_sim_$(n_sim).bson", estimation_result)
+    end
+end
+
+
+
+interrupt()
+
+########################################
+########################################
+##### Comparing the results ############
+########################################
+########################################
+
+
+
+########### BBOPTIM results
+using DataFrames
+function res_fun(opt_vec)
+    MC_est= [best_candidate(opt_vec[i])  for i = 1:n_reps ]
+    MC_fit= [best_fitness(opt_vec[i]) for i = 1:n_reps ]
+    MC_est= reduce(vcat, MC_est')
+    MC_est =hcat(MC_est, MC_fit)
+    return MC_est
+end
+
+
+
+MC_out_half_both = BSON.load("LogNormal Dist/MC/03/MC_half_bw_nf_$((1)*100)_sim_25.bson")
+MC_out_half_both = MC_out_half_both["beta_hat"]
+
+est_half_bw = res_fun(MC_out_half_both)
+
+DataFrame(est_half_bw, pars)
+
+pars = ["b11u", "b12u", "b21u", "b22u", "b11d", "b12d", "b21d", "b13u", "b33d","eqsel", "llike"  ]
+est_bw_half_10par = DataFrame(est_half_bw, pars)
+
+
+mapcols(mean, est_bw_half_10par)
+
+
+sort!(est_bw_half_10par, ["llike"])
+est_bw_half_10par
+
+##############################3
+##############################
+###############################
+
+MC_out_half_price = BSON.load("LogNormal Dist/MC/03/MC_half_bwprice_nf_$((1)*100)_sim_25.bson")
+MC_out_half_price= MC_out_half_price["beta_hat"];
+
+est_half_bwprice = res_fun(MC_out_half_price);
+
+pars = ["b11u", "b12u", "b21u", "b22u", "b11d", "b12d", "b21d", "b13u", "b33d","eqsel", "llike"  ]
+est_bw_halfprice_10par = DataFrame(est_half_bwprice, pars)
+
+
+sort!(est_bw_halfprice_10par, ["llike"])
+
+
+est_bw_half_10par
+
+#################################
+#################################
+#################################
+
+
+MC_out_half_eqsel = BSON.load("LogNormal Dist/MC/03/MC_half_eqsel_bw_nf_$((1)*100)_sim_25.bson");
+MC_out_half_eqsel= MC_out_half_eqsel["beta_hat"];
+
+est_half_bw_eqsel = res_fun(MC_out_half_eqsel);
+
+pars9 = ["b11u", "b12u", "b21u", "b22u", "b11d", "b12d", "b21d", "b13u", "b33d", "llike"  ];
+est_bw_half_eqsel = DataFrame(est_half_bw_eqsel, pars9);
+
+
+sort!(est_bw_half_eqsel, ["llike"]);
+
+#################################
+################################
+################################
+
+MC_out_half_eqsel_price = BSON.load("LogNormal Dist/MC/03/MC_half_price_eqsel_bw_nf_$((1)*100)_sim_25.bson");
+MC_out_half_eqsel_price= MC_out_half_eqsel_price["beta_hat"];
+
+est_half_bw_eqsel_price = res_fun(MC_out_half_eqsel_price);
+
+pars9 = ["b11u", "b12u", "b21u", "b22u", "b11d", "b12d", "b21d", "b13u", "b33d", "llike"  ];
+est_bw_half_eqsel_price = DataFrame(est_half_bw_eqsel_price, pars9);
+
+
+sort!(est_bw_half_eqsel_price, ["llike"]);
+
+
+
+########################################
+
+
+#################################
+################################
+################################
+
+
+out_100 = BSON.load("LogNormal Dist/MC/01/MC_nf_100_sim_25.bson");
+out_100 = out_100["beta_hat"];
+
+est_100 = res_fun(out_100);
+
+pars10 = ["b11u", "b12u", "b21u", "b22u", "b11d", "b12d", "b21d", "b13u", "b33d","eqsel", "llike"  ];
+est_100 = DataFrame(est_100, pars10);
+
+
+sort!(est_100, ["llike"]);
+
+############################3333
+######################################
+
+out_100_9 = BSON.load("LogNormal Dist/MC/02/MC_nf_100_sim_25.bson");
+out_100_9 = out_100_9["beta_hat"];
+
+est_100_9 = res_fun(out_100_9);
+
+pars9 = ["b11u", "b12u", "b21u", "b22u", "b11d", "b12d", "b21d", "b13u", "b33d", "llike"  ];
+est_100_9 = DataFrame(est_100_9, pars9);
+
+
+sort!(est_100_9, ["llike"]);
+
+
+############################3333
+######################################
+
+out_100_9_abs = BSON.load("LogNormal Dist/MC/04/est_abs_100_sim_25.bson");
+out_100_9_abs = out_100_9_abs["beta_hat"];
+
+est_100_9_abs = res_fun(out_100_9_abs);
+
+pars9 = ["b11u", "b12u", "b21u", "b22u", "b11d", "b12d", "b21d", "b13u", "b33d", "llike"  ];
+est_100_9_abs = DataFrame(est_100_9_abs, pars9);
+
+
+sort!(est_100_9_abs, ["llike"]);
+
+
+############################3333
+######################################
+
+out_200 = BSON.load("LogNormal Dist/MC/01/MC_nf_200_sim_25.bson");
+out_200 = out_200["beta_hat"];
+
+est_200 = res_fun(out_200);
+
+pars10 = ["b11u", "b12u", "b21u", "b22u", "b11d", "b12d", "b21d", "b13u", "b33d", "eqsel", "llike"];
+est_200 = DataFrame(est_200, pars10);
+
+
+sort!(est_200, ["llike"]);
+
+
+#######################3
+##########################
+###########################
+
+mapcols(mean, est_100)
+mapcols(mean, est_200)
+
+mapcols(mean, est_bw_half_10par)
+mapcols(mean, est_bw_halfprice_10par)
+
+
+mapcols(mean, est_100_9)
+mapcols(mean, est_100_9_abs)
+mapcols(mean, est_bw_half_eqsel)
+mapcols(mean, est_bw_half_eqsel_price)
+
+
+est_100_9
+
+
+
+
+
+
+
+
+
+
+MC_out_200 = BSON.load("LogNormal Dist/MC/01/MC_nf_$((2)*100)_sim_25.bson")
+MC_out_200 = MC_out_200["beta_hat"]
+est_200 = res_fun(MC_out_200)
+
+
+MC_out = BSON.load("LogNormal Dist/MC/01/MC_nf_$((1)*100)_sim_25.bson")
+MC_out = MC_out["beta_hat"]
+MC_est= [best_candidate(MC_out[i])  for i = 1:n_reps ]
+MC_fit= [best_fitness(MC_out[i]) for i = 1:n_reps ]
+
+
+MC_est= reduce(vcat, MC_est')
+MC_est =hcat(MC_est, MC_fit)
+MC_est
+
+
+# 50 simulations
+MC_out_50 = BSON.load("LogNormal Dist/MC/01/MC_nf_$((1)*100)_sim_50.bson");
+MC_out_50 = MC_out_50["beta_hat"];
+MC_est_50= [best_candidate(MC_out_50[i])  for i = 1:n_reps ];
+MC_fit_50= [best_fitness(MC_out_50[i]) for i = 1:n_reps ];
+
+
+MC_est_50= reduce(vcat, MC_est_50');
+MC_est_50 =hcat(MC_est_50, MC_fit_50)
+
+
+MC_out2 = BSON.load("LogNormal Dist/MC/02/MC_nf_$((1)*100)_sim_25.bson")
+MC_out2 = MC_out2["beta_hat"]
+MC_est2= [best_candidate(MC_out2[i])  for i = 1:n_reps ]
+MC_fit2= [best_fitness(MC_out2[i]) for i = 1:n_reps ]
+
+MC_est2= reduce(vcat, MC_est2')
+MC_est2 =hcat(MC_est2, MC_fit2)
+
+MC_out2_50 = BSON.load("LogNormal Dist/MC/02/MC_nf_$((1)*100)_sim_50.bson");
+MC_out2_50 = MC_out2_50["beta_hat"];
+MC_est2_50= [best_candidate(MC_out2_50[i])  for i = 1:n_reps ];
+MC_fit2_50= [best_fitness(MC_out2_50[i]) for i = 1:n_reps ];
+
+
+MC_est2_50= reduce(vcat, MC_est2_50');
+MC_est2_50 =hcat(MC_est2_50, MC_fit2_50)
+
+MC_fit - MC_fit2
+
+
+# MC_est_50[:,8:9] = abs.(MC_est_50[:,8:9])
+# MC_est2_50[:,8:9] = abs.(MC_est2_50[:,8:9])
+
+# est_matrix = Array{Float64, 3}(undef, 5, n_reps, 10)
+
+mean(MC_est, dims=1)
+mean(MC_est_50, dims=1)
+mean(est_200, dims =1)
+mean(MC_est2, dims=1)
+mean(MC_est2_50, dims=1)
+
+
+MC_out = BSON.load("LogNormal Dist/MC/01/MC_nf_$((1)*100)_sim_25.bson")
+MC_out = MC_out["beta_hat"]
+MC_est= [MC_out[i][1] for i = 1:n_reps ]
+MC_fit= [MC_out[i][2] for i = 1:n_reps ]
+
+MC_est= reduce(vcat, MC_est')
+
+
+MC_out2 = BSON.load("LogNormal Dist/MC/02/MC_nf_$((1)*100)_sim_25.bson")
+MC_out2 = MC_out2["beta_hat"]
+MC_est2= [MC_out2[i][1] for i = 1:n_reps ]
+MC_fit2= [MC_out2[i][2] for i = 1:n_reps ]
+
+MC_est2= reduce(vcat, MC_est2')
+
+hcat(MC_est2, MC_fit2 )
+
+
+
+sum(MC_fit2.<0)
+
+
+println(mean(estimates, dims =2))
+best_candidate(tst["beta_hat"][1])
+for j = 1:2
+    for i = 1:n_reps
+        tmp_est = BSON.load("LogNormal Dist/MC/01/MC_nf_$((j)*100)_sim_25.bson")
+        est_matrix[j,i,:] = vcat(tmp_est["beta_hat"][i][1][:], tmp_est["beta_hat"][i][2])
+        est_matrix[j,i,8:9]=abs.(est_matrix[j,i,8:9])
+    end
+end
+
+
+mse_vec = zeros(5, 10)
+bias_vec = zeros(5,10)
+true_pars[8:9] = abs.(true_pars[8:9])
+true_pars= vcat(true_pars, 0 )
+
+for j = 1:5 
+    for i = 1: n_reps
+        mse_vec[j,:] += (est_matrix[j,i,:] - true_pars).^2/n_reps
+        bias_vec[j,:] += (est_matrix[j,i,:] - true_pars)/n_reps
+        est_matrix[j,i,8:9]=abs.(est_matrix[j,i,8:9])
+    end
+    
+end
+
+sqrt.(mse_vec)
+bias_vec
+
+
+
+############# Spec 2
+
+est_matrix2 = Array{Float64, 3}(undef, 3, n_reps, 9)
+
+
+for j = 1:3
+    for i = 1: n_reps
+        tmp_est, tpar = BSON.load("NormalDist/MC/MC_half_$(j*100)_sim_$(25 +0*(j-1)*25).bson")
+        est_matrix2[j,i,:] = tmp_est[2][i][:]
+        est_matrix2[j,i,8:9]=abs.(est_matrix[j,i,8:9])
+    end
+end
+
+
+mse_vec2 = zeros(5, 9)
+bias_vec2 = zeros(5,9)
+true_pars[8:9] = abs.(true_pars[8:9])
+
+for j = 1:3
+    for i = 1: n_reps
+        mse_vec2[j,:] += (est_matrix2[j,i,:] - true_pars).^2/n_reps
+        bias_vec2[j,:] += (est_matrix2[j,i,:] - true_pars)/n_reps
+    end
+    
+end
+
+sqrt.(mse_vec2)
+bias_vec2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function est_performance(est_matrix, true_pars)
+    rmse = zeros(9)
+    bias = zeros(9)
+    est_matrix[:,8:9] = abs.(est_matrix[:,8:9])
+
+    true_pars[8:9] = abs.(true_pars[8:9])
+    for i = 1:n_reps
+        rmse += (true_pars - est_matrix[i,:]).^2/n_reps 
+        bias += (true_pars - est_matrix[i,:])/n_reps
+    end
+    rmse = sqrt.(rmse)
+    return rmse, bias
+
+end
+
+
+
+rmse50, bias50 = est_performance(est_matrix, true_pars)
+rmse50_300, bias50_300 = est_performance(est_matrix, true_pars)
+
+scatter(est_matrix[:,1])
+
+
+mean(est_matrix[:,7])
+bias50
+
+
+
+
+#######
+
+est_matrix= BSON.load("NormalDist/MC/02/MC_nf_400_sim_75.bson")
+
+opt_vec = est_matrix["beta_hat"]
+
+
+[opt_vec[i][:] for i = 1:24]
+
+best_candidate.(opt_vec[:])
+best_fitness.(opt_vec[:])
+
+
+
+
+
+
+
+
+
+
+
+
+
+##### Testing bboptimize 
+
+
+
+
+
+
+
+est_matrix= zeros(n_reps, 11)
+for n_rep = 1:2
+        Σ_up = [0 .1;
+                0 .2;
+                0 .1]
+
+
+        Σ_down =  [0 .3;
+                   0 .4;
+                   0 .1]
+
+        #      [β11u, β12u, β21u, β11u, β11d, β12d, β21u, β13u, β33d]
+
+        function par_gen(b)
             bup = [
                 vcat(b[1:2],b[8])';
                 vcat(b[3:4], 0.)';
                 vcat(0 , 0, 0)'
             ]
 
+
             bdown = [
                 vcat(b[5], b[6],0)';
                 vcat(b[7], 0, 0)';
                 vcat(0 ,0., b[9] )'
             ]
-            solve_draw =  x->sim_data_JV_up_obs(bup, bdown , sig_up, sig_down, n_firms, 360+x, true, up_data[1:2,:])
-            # solve_draw =  x->sim_data_JV_LogNormal(bup, bdown , sig_up, sig_down, n_firms, 360+x, true, up_data[1:2,:],down_data[1:2,:])
-            sim_dat = map(solve_draw, 1:n_sim)
-            ll=0.0
-    
-            # for j=1:n_sim
-            #     pconst = mean(sim_dat[j][3])-mu_price
-            #     sim_dat[j][3][:] = sim_dat[j][3] .+ pconst
-            # end
-            
-            # for j=1:n_sim
-            #     sim_dat[j][3][:] = sim_dat[j][3] .+ b[10]
-            # end
 
-            n_zeros = 0
-            for i =1:n_firms
-                like =0.
-                for j =1:n_sim
-                    like+=(
-                        pdf(Normal(),((down_data[1,i] - sim_dat[j][2][1,i])/h[1]))
-                        *pdf(Normal(),((down_data[2,i] - sim_dat[j][2][2,i])/h[2]))
-                        *pdf(Normal(),((price_data[i] - sim_dat[j][3][i])/h[3]))
-                        )
-                end
-                # println("like is: ", like, " log of which is: ", log(like/(n_sim*h[1]*h[2]*h[3])))
-                if like == 0
-                #     # println("Like is zero!!!")
-                    ll+= -n_firms
-                    n_zeros += 1
-                else
-                    ll+=log(like/(n_sim*h[1]*h[2]*h[3]))
-                    # ll+=like
-                end
-
-
-            end
-            # println("parameter: ", round.(b, digits=3), " function value: ", -ll/n_firms, " Number of zeros: ", n_zeros)
-            return -ll/n_firms
+                return bup, bdown
         end
 
-        if bb
 
-            bbo_search_range = (-5,5)
-            bbo_population_size =50
-            SMM_session =1
-            bbo_max_time=60
-            bbo_ndim = 9
+        bup, bdown = par_gen(true_pars)
+        up_data, down_data, price_data =
+         sim_data_JV_LogNormal(bup, bdown, Σ_up, Σ_down, n_firms, 38+n_rep, false, 0, 0, 3.)
 
-            if SMM_session == 1
-                # Set up the solver for the first session of optimization
-                opt = bbsetup(loglike;  SearchRange = bbo_search_range, NumDimensions =bbo_ndim, PopulationSize = bbo_population_size, Method = :adaptive_de_rand_1_bin_radiuslimited, MaxTime = bbo_max_time)
-            else
-                # Load the optimization progress to restart the optimization
-                # opt = BSON.load(dir_bbo_previous)["opt"]
+    function bcv2_fun(h, down_data, price_data)
+        h=abs.(h)
+        ll = 0.0
+        n_firms = length(price_data)
+        for i = 1:n_firms
+            for j=1:n_firms
+                if (j!=i)
+                    expr_1 = ((down_data[1,i]-down_data[1,j])/h[1])^2 + ((down_data[2,i]-down_data[2,j])/h[2])^2 + ((price_data[i]-price_data[j])/h[3])^2
+                    expr_2 = pdf(Normal(),(down_data[1,i]-down_data[1,j])/h[1]) * pdf(Normal(),((down_data[2,i]-down_data[2,j])/h[2])) * pdf(Normal(),((price_data[i]-price_data[j])/h[3]))
+                    ll += (expr_1 - (2*3 +4)*expr_1 + (3^2 +2*3))*expr_2
+                end
             end
+        end
+        val = ((sqrt(2*pi))^3 * n_firms *h[1]*h[2]*h[3])^(-1) +
+                                ((4*n_firms*(n_firms-1))*h[1]*h[2]*h[3])^(-1) * ll
+        # println("band: ",h," val: ", val)
+        return val
+    end
+
+
+
+
+    # # Optimize over choice of h
+    inds = 1:n_firms
+    res_bcv = Optim.optimize(x->bcv2_fun(x,down_data[1:2,inds],price_data[inds]), [0.1,.1,.1])
+    h = (abs.(Optim.minimizer(res_bcv)))
+
+    function loglike(b)
+        # n_sim=50
         
-            solution_bb = bboptimize(opt)
-            est_par = best_candidate(solution_bb)
-
-        else
-            res_CMAE = CMAEvolutionStrategy.minimize(loglike, rand(9), 1.,
-                lower = nothing,
-                upper = nothing,
-                noise_handling = nothing,
-                callback = (object, inputs, function_values, ranks) -> nothing,
-                parallel_evaluation = false,
-                multi_threading = false,
-                verbosity = 1,
-                seed = rand(UInt),
-                maxtime = 1000,
-                maxiter = nothing,
-                maxfevals = nothing,
-                ftarget = nothing,
-                xtol = nothing,
-                ftol = 1e-6)
-
-          est_par = xbest(res_CMAE)
-        end
-
-    return est_par, loglike(est_par)
-end
-
-
-
-estimates = pmap(x->replicate_byseed(x, 100, 50),1:24)
-
-converged = [estimates[i][2]<0 for i =1:24]
-
-for i = 1:24
-    sumpar = zeros(9)
-    if converged[i]
-        sumpar = sumpar + estimates[i][1]
-        println(estimates[i][1])
-    end
-    println("mean: ", sumpar/sum(converged))
-end
-
-
-stop
-
-estimates_bb = pmap(x->replicate_byseed(x, 100, 50, true),1:24)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Monday April 18, 2022 Log Normal
-# N=500 S= 100 parameter: [2.201, -0.744, 2.144, 2.998, 2.766, -0.111, -1.229, -0.347, 0.688] function value: -0.7557211674202852 Number of zeros: 0
-# N=500 S=100 parameter: [-0.119, 0.007, 1.138, 3.0, 0.771, -0.598, -0.094, -0.003, 1.545] function value: 1.1840699948728597 Number of zeros: 0
-#     (different bandwidth)
-# True parameters: 1.1940
-# [-0.334, 2.028, 0.525, 2.19, 1.963, -2.234, 1.163, -0.059, 0.777]
-altpar = [-1.511, 0.841, 3.25, 1.499, -2.584, -2.178, 1.334, 1.006, 0.77]
-altpar=[-3.316, 0.456, 4.643, 1.685, -0.376, -1.52, 1.241, 3.665, -1.824]
-
-
-
-# altpar= vcat(best_candidate(bbsolution1)[1:4],tpar[5:end])
-
-# altpar = best_candidate(bbsolution1)
-bup1 = [altpar[1] altpar[2] altpar[8];
-       altpar[3] altpar[4] 0;
-        0 0  0 ]
-bdown1 = [altpar[5] altpar[6] 0;
-        altpar[7]  0 0;
-        0 0 altpar[9]]
-B1= bup1+bdown1
-
-# sig_up = [0 .1;
-#             0 .2;
-#             0 .1]
-# sig_down = [0 0.1;
-#             0 .2;
-#             0 .1]
-# up_data1, down_data1, price_data1 = sim_data_JV_LogNormal(bup1, bdown1, sig_up, sig_down, n_firms, 36, false, 0, 0)
-
-n_firms = 1000 
-up_data, down_data, price_data= sim_data_JV_LogNormal(bup, bdown, sig_up, sig_down, n_firms, 36, false, 0, 0)
-
-up_data1, down_data1, price_data1 = sim_data_JV_up_obs(bup1, bdown1, sig_up, sig_down, n_firms, 36, true, up_data[1:2,:])
-up_data2, down_data2, price_data2 = sim_data_JV_up_obs(bup, bdown, sig_up, sig_down, n_firms, 1360, true, up_data[1:2,:])
-
-mu_price0 = mean(price_data)
-mu_price1 = mean(price_data1)
-mu_price2 = mean(price_data2)
-
-scatter(up_data[1,:],up_data1[1,:])
-
-# [cor(up_data[1,:],down_data[k,:]) for k =1:2]
-#     -[cor(up_data1[1,:],down_data1[k,:]) for k =1:2]
-
-
-# [cor(up_data[1,:],down_data[k,:]) for k =1:2]
-#     -[cor(up_data2[1,:],down_data2[k,:]) for k =1:2]
-
-
-
-scatter(up_data1[1,:],up_data[1,:])
-scatter(down_data[2,:],down_data1[2,:])
-scatter(price_data, price_data1)
-
-cor(vcat(up_data[1:2,:],price_data')', vcat(down_data[1:2,:], price_data')')
-cor(vcat(up_data1[1:2,:],price_data1')', vcat(down_data1[1:2,:], price_data1')')
-cor(vcat(up_data2[1:2,:],price_data2')', vcat(down_data2[1:2,:], price_data2')')
-
-var(up_data[2,:])
-scatter(up_data[1,:], down_data[1,:])
-scatter!(up_data1[1,:], down_data1[1,:], color=:red, markersize =2)
-
-scatter(up_data[2,:], down_data[1,:])
-scatter!(up_data1[2,:], down_data1[1,:], color=:red, markersize =2)
-
-scatter(up_data[2,:], price_data)
-scatter!(up_data1[2,:], price_data1, color=:red, markersize =2)
-
-
-
-
-
-
-scatter(up_data[1,:], up_data1[1,:])
-scatter(down_data[1,:], down_data1[1,:])
-
-cor(up_data[1,:],down_data[1,:])
-cor(up_data1[1,:],down_data1[1,:])
-
-cor(up_data1[2,:],price_data_cf1)
-cor(up_data[2,:],price_data_cf)
-
-
-cor(up_data1[1,:],price_data_cf1)
-cor(up_data[1,:],price_data_cf)
-
-scatter(up_data[1,:], down_data[1,:],
-        xlims=(0.5,2), ylims=(0.5,2.5))
-
-scatter!(up_data1[1,:], down_data1[1,:],
-        xlims=(0.5,2), ylims=(0.5,2.5), color =:red,
-        markersize = 2 )
-
-scatter(up_data[2,:], price_data_cf)
-scatter!(up_data1[2,:], price_data_cf1,
-        color =:red,
-        markersize = 2 )
-
-cor(price_data_cf, price_data_cf1)
-scatter(price_data_cf, price_data_cf1)
-
-scatter(down_data[1,:], down_data1[1,:])
-scatter(down_data[1,:], down_data1[1,:])
-
-scatter(price_data_cf, price_data_cf1)
-
-
-pdf.(Normal(),((price_data_cf-price_data_cf1)[:]/0.09))
-pdf.(Normal(),((up_data[1,:]-up_data1[1,:])[:]/0.09))
-scatter((price_data_cf.-[sim_dat[j][3][100] for j=1:n_sim])[:])
-scatter((down_data[1,:].-[sim_dat[j][1][3,i] for j=1:n_sim])[:])
-
-
-
-
-
-
-solve_draw= x->sim_data_JV_up_obs(bup1, bdown1, sig_up, sig_down, n_firms, 1234+x, true, up_data[1:2,:])
-solve_draw= x->sim_data_JV(bup, bdown, sig_up, sig_down, n_firms, 1234+x, true, up_data[1:2,:],down_data[1:2,:])
-
-n_sim=500
-sim_dat = pmap(solve_draw, 1:n_sim)
-
-
-#############################################
-#############################################
-################ Illustration ###########
-#############################################
-#############################################
-#############################################
-
-solve_draw= x->sim_data_JV_up_obs(bup, bdown, sig_up, sig_down, n_firms, 1234+x, true, up_data[1:2,:])
-solve_draw1= x->sim_data_JV_up_obs(bup1*10, bdown1, sig_up, sig_down, n_firms, 1234+x, true, up_data[1:2,:])
-solve_draw= x->sim_data_JV(bup, bdown, sig_up, sig_down, n_firms, 1234+x, true, up_data[1:2,:],down_data[1:2,:])
-solve_draw1= x->sim_data_JV(bup1, bdown1, sig_up, sig_down, n_firms, 1234+x, true, up_data[1:2,:],down_data[1:2,:])
-
-n_sim=500
-sim_dat = pmap(solve_draw, 1:n_sim)
-sim_dat1 = pmap(solve_draw1, 1:n_sim)
-
-i=20
-p1 = scatter(
-        ([down_data[1,i] for j=1:n_sim])-([sim_dat[j][2][1,i] for j=1:n_sim])
-            , markersize=3, title="down1");
-p2= scatter(
-        ([down_data[2,i] for j=1:n_sim])-([sim_dat[j][2][2,i] for j=1:n_sim])
-            , markersize=3, title = "down2");
-p3= scatter(
-        ([price_data_cf[i] for j=1:n_sim])-([sim_dat[j][3][i] for j=1:n_sim])
-            , markersize=3, title= "price");
-
-
-####### PLOT WITH ALTERNATIVE VALUES ######
-
-
-
-p4 = scatter(
-        ([down_data[1,i] for j=1:n_sim])-([sim_dat1[j][2][1,i] for j=1:n_sim])
-            , markersize=3, title="down1");
-p5= scatter(
-        ([down_data[2,i] for j=1:n_sim])-([sim_dat1[j][2][2,i] for j=1:n_sim])
-            , markersize=3, title= "down2");
-p6= scatter(
-        ([price_data_cf[i] for j=1:n_sim])-([sim_dat1[j][3][i] for j=1:n_sim])
-            , markersize=3, title = "price");
-
-plot(p1,p2,p3,p4,p5,p6, legends=false)
-
-
-
-function bcv2_fun(h)
-    h=abs.(h)
-    ll = 0.0
-    for i = 1:n_firms
-        for j=1:n_firms
-            if (j!=i)
-                # expr_1 = 0.0
-                # expr_1 = ((up_data[1,i]-up_data[1,j])/h[1])^2 + ((down_data[1,i]-down_data[1,j])/h[2])^2 + ((price_data_cf[i]-price_data_cf[j])/h[3])^2
-                # expr_2 = pdf(Normal(),(up_data[1,i]-up_data[1,j])/h[1]) * pdf(Normal(),((down_data[1,i]-down_data[1,j])/h[2])) * pdf(Normal(),((price_data_cf[i]-price_data_cf[j])/h[3]))
-                expr_1 = ((down_data[1,i]-down_data[1,j])/h[1])^2 + ((down_data[2,i]-down_data[2,j])/h[2])^2 + ((price_data_cf[i]-price_data_cf[j])/h[3])^2
-                expr_2 = pdf(Normal(),(down_data[1,i]-down_data[1,j])/h[1]) * pdf(Normal(),((down_data[2,i]-down_data[2,j])/h[2])) * pdf(Normal(),((price_data_cf[i]-price_data_cf[j])/h[3]))
-                ll += (expr_1 - (2*3 +4)*expr_1 + (3^2 +2*3))*expr_2
+    
+        bup = [
+            vcat(b[1:2], b[8])';
+            vcat(b[3:4], 0.)';
+            vcat(0 , 0, 0)'
+        ]
+    
+        bdown = [
+            vcat(b[5], b[6],0)';
+            vcat(b[7], 0, 0)';
+            vcat(0 ,0., b[9] )'
+        ]
+    
+        # bup = [
+        #     vcat(b[1:2], 1.)';
+        #     vcat(b[3:4], 0.)';
+        #     vcat(0 , 0, 0)'
+        # ]
+    
+        # bdown = [
+        #     vcat(b[5], b[6],0)';
+        #     vcat(b[7], 0, 0)';
+        #     vcat(0 ,0., 1. )'
+        #  ]
+    
+        solve_draw =  x->sim_data_JV_up_obs(bup, bdown , Σ_up, Σ_down, n_firms, 360+x, true, up_data[1:2,:],3.)
+    
+        sim_dat = map(solve_draw, 1:n_sim)
+        # sim_dat = solve_draw.(1:n_sim)
+        # sim_dat = solve_draw.(1:n_sim)
+        # sim_dat = []
+        # for i = 1:n_sim
+        #     push!(sim_dat, solve_draw(i))
+        # end
+        ll=0.0
+        n_zeros = 0
+        for i =1:n_firms
+            like =0.
+            for j =1:n_sim
+                like+=(
+                    pdf(Normal(),((down_data[1,i] - sim_dat[j][2][1,i])/h[1]))
+                    *pdf(Normal(),((down_data[2,i] - sim_dat[j][2][2,i])/h[2]))
+                    *pdf(Normal(),((price_data[i] - sim_dat[j][3][i])/h[3]))
+                    )
             end
-        end
-    end
-    val = ((sqrt(2*pi))^3 * n_firms *h[1]*h[2]*h[3])^(-1)+ ((4*n_firms*(n_firms-1))*h[1]*h[2]*h[3])^(-1) * ll
-    # println("band: ",h," val: ", val)
-    return val
-end
-# res_ucv = Optim.optimize(ucv_fun, rand(3))
-@benchmark res_bcv = Optim.optimize(bcv2_fun, [.05,.05,.1],LBFGS(),autodiff = :forward)
-Optim.minimizer(res_bcv)
-
-
-function ucv_fun(h)
-    h=abs.(h)
-    ll = 0.0
-    for i = 1:n_firms
-        for j=1:n_firms
-            if (j!=i)
-                expr_1=0.0
-                expr_1 += -0.25*((down_data[1,i]-down_data[1,j])/h[1])^2 -0.25*((down_data[2,i]-down_data[2,j])/h[2])^2 -0.25*((price_data_cf[i]-price_data_cf[j])/h[3])^2
-                expr_2 =0.0
-                expr_2 += -0.5*((down_data[1,i]-down_data[1,j])/h[1])^2 -0.5*((down_data[2,i]-down_data[2,j])/h[2])^2 -.5*((price_data_cf[i]-price_data_cf[j])/h[3])^2
-                ll += exp(expr_1)- (2*2^(3/2))*exp(expr_2)
+            # println("like is: ", like, " log of which is: ", log(like/(n_sim*h[1]*h[2]*h[3])))
+            if like == 0
+            #     # println("Like is zero!!!")
+                ll+= -n_firms
+                n_zeros += 1
+            else
+                ll+=log(like/(n_sim*h[1]*h[2]*h[3]))
+                # ll+=like
             end
+    
+    
         end
-    end
-    val = ((2*sqrt(pi))^3 * n_firms *h[1]*h[2]*h[3])^(-1)+ ((2*sqrt(pi))^3 * n_firms^2 *h[1]*h[2]*h[3])^(-1)*ll
-    println("band: ",h," val: ", val)
-    return val
-end
-res_ucv = Optim.optimize(ucv_fun, rand(3))
-res_bcv = Optim.optimize(bcv2_fun, [0.1,.1,.1])
-
-# h_ucv = Optim.minimizer(res_ucv)
-@show h_bcv = Optim.minimizer(res_bcv)
-stop
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#
-# @everywhere using ForwardDiff
-# @everywhere g = x-> ForwardDiff.gradient(loglikepr,x);
-# g(tpar)
-
-
-
-
-#Tuesday April 19  N=500, S=100
-# 1.0610327144220315, 1.1919006904187117, 0.7743018802789254, 2.4655273806134694, 2.518238980780474, -1.7582964994263002, 0.4907513258302425, -0.5106482635628364, 0.6359353989317891
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# res_1 = Optim.optimize(loglikepr,randn(10) )
-
-est_pars = Optim.minimizer(res_1)
-parameter: [0.9096990084827733, 1.5014328626826445, 0.48271857957354425, 2.4932050323272947, 2.496648174914263, -2.000245205253806, 0.9846901768913681, -1.0723973642542484, 1.57060400252492, 0.5562416984742975] function value: 1.0833060373082983
-
-
-Value: 1.0833060373082983
-Value: 1.0833060428773038
-1.0833060424511887
-#define function with two variables
-
-fun_2v = x -> loglikepr(vcat(est_pars[1:7], x))
-fun_2v(est_pars[8:10])
-
-fun_2v([-1.07, 1.5,1.])
-
-
-res_2 = Optim.optimize(fun_2v, est_pars[8:10] )
-res_2 = Optim.optimize(fun_2v, [-1.07, 1.5,.5] )
-res_2 = Optim.optimize(fun_2v, rand(3))
-
-Optim.minimizer(res_2)
-
-# fun_1v = x -> fun_2v(vcat(x, 2))
-# res_3 = Optim.optimize(fun_1v, [-1.07, 1.54] )
-# res_3 = Optim.optimize(fun_1v, Optim.minimizer(res_3))
-
-fun_tst = x -> loglikepr(vcat(x, 3))
-res_4 = Optim.optimize(fun_tst, est_pars[1:9] )
-est_pars=Optim.minimizer(res_4)
-res_4 = Optim.optimize(fun_tst,[79.165, 3.668, -6.921, 8.779, 119.309, -17.171, 53.594, -57.095, 113.636])
-res_4 = Optim.optimize(fun_tst,rand(9))
-
-
-
-parameter: [3.228, 1.563, 0.282, 2.682, 5.93, -2.442, 2.532, -2.695, -4.863, -2.0] function value: 1.0563174470528696
-parameter: [1.62, 1.519, 0.432, 2.553, 3.546, -2.132, 1.457, -1.557, -2.586, -1.0] function value: 1.05631745963973
-parameter: [1.242, 1.516, 0.466, 2.303, 3.45, -2.081, 1.236, -1.241, 2.058, -0.5] function value: 1.2285046417101508
-parameter: [0.821, 1.499, 0.491, 2.486, 2.364, -1.983, 0.925, 1.009, 1.443, -0.5] function value: 1.0833060342377498
-parameter: [0.035, 1.477, 0.566, 2.423, 1.189, -1.83, 0.395, -0.443, 0.313, 0.0] function value: 1.0833060361311713
-parameter: [0.051, 1.477, 0.565, 2.424, 1.212, -1.833, 0.406, -0.455, 0.335, 0.01] function value: 1.0833060399687218
-parameter: [0.906, 1.5, 0.498, 2.496, 2.486, -1.995, 0.98, -1.051, -1.574, -0.556] function value: 1.0563174455549786
-parameter: [1.067, 1.504, 0.483, 2.509, 2.725, -2.026, 1.088, -1.165, -1.802, -0.656] function value: 1.0563174526285561
-parameter: [0.908, 1.501, 0.483, 2.493, 2.495, -2.0, 0.984, -1.072, 1.569, 0.556] function value: 1.0833060578353952
-parameter: [1.066, 1.506, 0.468, 2.506, 2.731, -2.031, 1.09, -1.185, 1.796, 0.656] function value: 1.0833060413330948
-parameter: [1.224, 1.51, 0.453, 2.518, 2.967, -2.061, 1.196, -1.298, 2.023, 0.756] function value: 1.0833060382103779
-parameter: [1.607, 1.521, 0.416, 2.549, 3.541, -2.136, 1.455, -1.574, 2.575, 1.0] function value: 1.0833060341646064
-parameter: [7.893, 1.696, -0.184, 3.056, 12.948, -3.358, 5.694, -6.096, 11.62, 5.0] function value: 1.083306040580924
-parameter: [8.05, 1.701, -0.199, 3.069, 13.184, -3.389, 5.8, -6.21, 11.847, 5.1] function value: 1.0833060356914954
-parameter: [15.75, 1.915, -0.934, 3.69, 24.708, -4.886, 10.993, -11.749, 22.928, 10.0] function value: 1.0833060374699903
-parameter: [15.993, 1.921, -0.926, 3.704, 25.025, -4.922, 11.131, -11.879, 23.196, 10.1] function value: 1.0833128630718507
-parameter: [79.165, 3.668, -6.921, 8.779, 119.309, -17.171, 53.594, -57.095, 113.636, 50.0] function value: 1.0833095659810787
-parameter: [79.096, 3.672, -6.945, 8.783, 119.333, -17.178, 53.613, -57.159, 113.761, 50.1] function value: 1.0833072567393618
-parameter: [80.178, 3.713, -7.083, 8.884, 121.141, -17.417, 54.445, -58.103, 115.65, 51.0] function value: 1.083306037600223
-
-
-x1 = [0.906, 1.5, 0.498, 2.496, 2.486, -1.995, 0.98, -1.051, -1.574, -0.556]
-x2 = [1.067, 1.504, 0.483, 2.509, 2.725, -2.026, 1.088, -1.165, -1.802, -0.656]
-
-
-y1 = [0.908, 1.501, 0.483, 2.493, 2.495, -2.0, 0.984, -1.072, 1.569, 0.556]
-y2 = [1.066, 1.506, 0.468, 2.506, 2.731, -2.031, 1.09, -1.185, 1.796, 0.656]
-y3 = [1.224, 1.51, 0.453, 2.518, 2.967, -2.061, 1.196, -1.298, 2.023, 0.756]
-
-
-y4 = [7.893, 1.696, -0.184, 3.056, 12.948, -3.358, 5.694, -6.096, 11.62, 5.0]
-y5 = [8.05, 1.701, -0.199, 3.069, 13.184, -3.389, 5.8, -6.21, 11.847, 5.1]
-
-
-y6 = [15.75, 1.915, -0.934, 3.69, 24.708, -4.886, 10.993, -11.749, 22.928, 10.0]
-y7 = [15.993, 1.921, -0.926, 3.704, 25.025, -4.922, 11.131, -11.879, 23.196, 10.1]
-
-
-y8 = [79.165, 3.668, -6.921, 8.779, 119.309, -17.171, 53.594, -57.095, 113.636, 50.0]
-y9 = [79.096, 3.672, -6.945, 8.783, 119.333, -17.178, 53.613, -57.159, 113.761, 50.1]
-y10 = [80.178, 3.713, -7.083, 8.884, 121.141, -17.417, 54.445, -58.103, 115.65, 51.0]
-
-
-println("Gradient: ", round.((y2 - y1)/0.1, digits=3))
-
-
-println("Gradient: ", round.((y3 - y2)/0.1, digits=3))
-println("Gradient: ", round.((y3 - y1)/0.2, digits=3))
-
-println("Gradient: ", round.((z2 - z1)/0.1, digits=3))
-
-
-println("Gradient: ", round.((y5 - y4)/0.1, digits=3))
-
-println("Gradient: ", round.((y7 - y6)/0.1, digits=3))
-
-println("Gradient: ", round.((y9 - y8)/0.1, digits=3))
-
-println("Gradient: ", round.((y10 - y8)/1, digits=3))
-
-
-((x2-x1)/-0.1)
-
-Optim.minimizer(res_3)
-Optim.minimum(res_3)
-
-res_3 = Optim.optimize(fun_1v, rand(2) )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#########################################################
-############################MATCH ONLY###################
-#########################################################
-function loglikepr_match(b)
-    n_sim=100
-
-    bup = [
-        vcat(b[1:2],b[8])';
-        vcat(b[3:4], 0.)';
-        vcat(b[9], 0, 0)'
-    ]
-
-
-    bdown = [
-        vcat(b[5], b[6],0)';
-        vcat(b[7], 0, 0)';
-        vcat(0 ,0., b[10] )'
-     ]
-
-    solve_draw = x->sim_data_like(up_data[1:2,:],bup, bdown , [2, 1., 1], [.5, 3, 1], n_firms, 1234+x, 2.5)
-    sim_dat = map(solve_draw, 1:n_sim)
-    ll=0.0
-    h=[0.1, 0.2, 1.5]
-
-    for j=1:n_sim
-        pconst = mean(sim_dat[j][3])-mu_price
-        sim_dat[j][3][:] = sim_dat[j][3] .+ pconst
-    end
-
-    for i =1:n_firms
-        like =0.
-        for j =1:n_sim
-            like+=(
-                pdf(Normal(),((down_data[1,i] - sim_dat[j][2][1,i])/h[1]))
-                *pdf(Normal(),((down_data[2,i] - sim_dat[j][2][2,i])/h[2]))
-                )
+        if mod(time(),10)<0.1
+            println("parameter: ", round.(b, digits=3), " function value: ", -ll/n_firms, " Number of zeros: ", n_zeros)
         end
-        ll+=log(like/(n_sim*h[1]*h[2]))
+
+        return -ll/n_firms
     end
-    println("parameter: ", round.(b, digits=3), " function value: ", -ll/n_firms)
-    return -ll/n_firms
-end
 
 
-fun_2v = x -> loglikepr(vcat(est_pars[1:7], x))
-fun_2v(est_pars[8:10])
+    bbo_search_range = (-5,5)
+    bbo_population_size =50
+    bbo_max_time=100
+    bbo_ndim = 10
+    bbo_feval = 10000
 
-fun_2v([-1.07, 1.5,1.])
-
-
-res_2 = Optim.optimize(fun_2v, est_pars[8:10] )
-res_2 = Optim.optimize(fun_2v, [-1.07, 1.5,.5] )
-res_2 = Optim.optimize(fun_2v, rand(3))
-
-Optim.minimizer(res_2)
-
+        # opt = bbsetup(loglike; SearchRange = bbo_search_range, 
+        #   NumDimensions =bbo_ndim, PopulationSize = bbo_population_size, 
+        #   Method = :adaptive_de_rand_1_bin_radiuslimited, MaxFuncEvals = bbo_feval,
+        #   TraceInterval=10.0, TraceMode=:compact)
 
 
+    bbsolution1 = bboptimize(loglike; SearchRange = bbo_search_range, 
+            NumDimensions =bbo_ndim, PopulationSize = bbo_population_size, 
+            Method = :adaptive_de_rand_1_bin_radiuslimited, MaxFuncEvals = bbo_feval,
+            TraceInterval=10.0, TraceMode=:compact, Workers= [myid()]) 
 
+    est_matrix[n_rep,1:10] = best_candidate(bbsolution1)
+    est_matrix[n_rep,11] = best_fitness(bbsolution1)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-println("Pars: ", round.(Optim.minimizer(res_1), digits=3), " error: ", Optim.minimum(res_1))
-
-t2= Optim.minimizer(res_1)
-loglikepr(t2)
-loglikepr(tpar)
-1.512322906068312
-parameter: [0.9367709557048315, 1.4996053495338961, 0.4953518306944853, 2.49603019899543, 2.514817957334957, -1.9998389292512435, 0.9841113772121836, 1.582841718095592, 0.801864214906488, -1.0667187511359142] function value: 1.039943389966612
-function loglikep(b)
-    n_sim=500
-
-    A = [
-    vcat(b[1:2],b[4])';
-    vcat(b[3],1, 0)';
-    vcat(b[5], 0, 1)'
-    ]
-    # bup = [
-    #     vcat(b[1:2],0)';
-    #     vcat(b[3:4], 0)';
-    #     vcat(0, 0, 0)'
-    # ]
-    #
-    #
-    # bdown = [
-    #     vcat(b[5], b[6],0)';
-    #     vcat(b[7],b[8], 0)';
-    #     vcat(0, 0, 1)'
-    # ]
-    # B1 = bup+bdown
-    # norm_ = norm(B[1:2,1:2])/norm(B1[1:2,1:2])
-    # bup[1:2,1:2] = bup[1:2,1:2]*norm_
-    # bdown[1:2,1:2] = bdown[1:2,1:2]*norm_
-
-    # bup = [b[1:3]' ;
-    #         b[4:6]'  ;
-    #         vcat(0.5,0,0)']
-    # bdown = [b[7:9]' ;
-    #         b[10:12]'  ;
-    #         vcat(0,0,1)' ]
- #
- # bup = [b[1:3]' ;
- #         b[4:6]'  ;
- #         vcat(b[7],0,0)']
- # bdown = [b[10:12]' ;
- #         b[13:15]'  ;
- #         vcat(b[16],0,1)' ]
-    solve_draw = x->sim_data_like_mo(up_data[1:2,:],A, [2, 1., 1.5], [.5, 3, 1.], n_firms, 1234+x,2.5)
-    sim_dat = map(solve_draw, 1:n_sim)
-    ll=0.0
-    h=[0.2, 0.2, .3]
-
-    for i =1:n_firms
-        like =0.
-        for j =1:n_sim
-            if sim_dat[j]==99999
-                return 200.
-            end
-
-
-            like+=(
-                pdf(Normal(),((down_data[1,i] - sim_dat[j][2][1,i])/h[1]))
-                *pdf(Normal(),((down_data[2,i] - sim_dat[j][2][2,i])/h[2]))
-                # *pdf(Normal(),((price_data_cf[i] - sim_dat[j][3][i])/h[3]))
-                )
-        end
-        ll+=log(like/(n_sim*h[1]*h[2]))
-    end
-    println("parameter: ", b, " function value: ", -ll/n_firms)
-    return -ll/n_firms
 end
