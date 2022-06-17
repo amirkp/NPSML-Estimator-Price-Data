@@ -13,12 +13,25 @@ function res_fun(opt_vec)
 end
 
 # BSON.load("/Users/akp/output/MC-LN/est_100_sim_25.bson")
-out_200 = BSON.parse("/Users/akp/output/MC-LN/est_100_sim_25.bson")[:data];
+out = BSON.load("/Users/akp/output/02/est_100_sim_25.bson")
 
-n_reps=100
-out_200 = out_200[2][1];
+# n_reps=100
+est = out["beta_hat"];
+est
+# fit = out["fitness"]
+# hcat(est, fit)
 
+bias = mean(est, dims=1) -true_pars'
+MSE = sqrt.(mean((est .- true_pars').^2, dims=1))
+
+
+
+out_200
 est_200 = res_fun(out_200);
+est = reduce(hcat, est)
+est[1,2]
+est[1]
+
 
 pars10 = ["b11u", "b12u", "b21u", "b22u", "b11d", "b12d", "b21d", "b13u", "b33d", "eqsel", "llike"];
 est_200 = DataFrame(est_200, pars10);

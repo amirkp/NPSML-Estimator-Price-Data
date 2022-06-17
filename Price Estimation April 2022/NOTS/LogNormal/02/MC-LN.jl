@@ -28,7 +28,7 @@ using BSON
 end
 
 @everywhere begin 
-    n_reps =24  # Number of replications (fake datasets)
+    n_reps =100  # Number of replications (fake datasets)
     true_pars = [-2.5, 1.5, -1.5, -.5, 3.5, 2.5, 1.5, -3, 3, -3.]
     Σ_up = [0 .1;
         0 .2;
@@ -61,7 +61,7 @@ end
                
 end
 
-@everywhere function replicate_byseed(n_rep, n_firms, n_sim)
+@everywhere function replicate_byseed(n_rep, n_firms, n_sim, h_scale)
 
  
 
@@ -102,7 +102,7 @@ end
     
     
     
-    function loglike(b)
+    function loglike(b,h)
         bup = [
             vcat(b[1:2], (b[8]))';
             vcat(b[3:4], 0.)';
@@ -160,8 +160,26 @@ end
     # println("min ", Evolutionary.minimizer(res))
     # return 1 
     # # return loglike(vcat(true_pars, 1))
-    println("loglike of true pars: ", loglike(true_pars))
-    res_CMAE =  CMAEvolutionStrategy.minimize(loglike, ones(10) , 1.,
+    println("loglike of true pars: ", loglike(true_pars,h))
+    init_res_CMAE =  CMAEvolutionStrategy.minimize(x->loglike(x,10*h),ones(10) , 1.,
+        lower = -10*ones(10),
+        upper = 10*ones(10),
+        noise_handling =nothing,
+        callback = (object, inputs, function_values, ranks) -> nothing,
+        parallel_evaluation = false,
+        multi_threading = false,
+        verbosity = 1,
+        seed = rand(UInt),
+        maxtime = 100,
+        maxiter = nothing,
+        maxfevals = 30000,
+        ftarget = nothing,
+        xtol = 1e-5,
+        ftol = 1e-5)
+    
+    
+    
+    res_CMAE =  CMAEvolutionStrategy.minimize(x->loglike(x,h), xbest(init_res_CMAE) , 1.,
         lower = -10*ones(10),
         upper = 10*ones(10),
         noise_handling = CMAEvolutionStrategy.NoiseHandling(2.1),
@@ -170,7 +188,7 @@ end
         multi_threading = false,
         verbosity = 1,
         seed = rand(UInt),
-        maxtime = 100,
+        maxtime = 3600*(n_sim/25),
         maxiter = nothing,
         maxfevals = 30000,
         ftarget = nothing,
@@ -201,69 +219,17 @@ end
 end
 
 
-# replicate_byseed(2, 100,25) 
-
 # Parameter estimates 
-for n_sim =25:25:25
+for n_sim =25:25:50
     for n_firms = 100:100:100
-        est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim),1:24)
+        est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim),1:n_reps)
         
         estimation_result = Dict()
         push!(estimation_result, "beta_hat" => reduce(vcat, [est_pars[i][1] for i =1:24]'))
         push!(estimation_result, "fitness" => reduce(vcat, [est_pars[i][2] for i =1:24]'))
         push!(estimation_result, "bw" => reduce(vcat, [est_pars[i][3] for i =1:24]'))
-        # bson("/home/ak68/02/est_$(n_firms)_sim_$(n_sim).bson", estimation_result)
+        bson("/home/ak68/02/est_$(n_firms)_sim_$(n_sim).bson", estimation_result)
         # bson("/Users/akp/github/NPSML-Estimator-Price-Data/Price Estimation April 2022/LogNormal Dist/MC/est_$(n_firms)_sim_$(n_sim).bson", estimation_result)
 
     end
 end
-
-# interrupt()
-
-# @everywhere  function loglike(b)
-#     bup = [
-#         vcat(b[1:2], (b[8]))';
-#         vcat(b[3:4], 0.)';
-#         vcat(0 , 0, 0)'
-#     ]
-
-#     bdown = [
-#         vcat(b[5], b[6],0)';
-#         vcat(b[7], 0, 0)';
-#         vcat(0 ,0., (b[9]) )'
-#      ]
-
-#     solve_draw =  x->sim_data_JV_up_obs(bup, bdown , Σ_up, Σ_down, n_firms, 360+x, true, up_data[1:2,:],b[10])
-
-#     sim_dat = map(solve_draw, 1:n_sim)
-#     ll=0.0
-#     n_zeros = 0
-#     for i =1:n_firms
-#         like =0.
-#         for j =1:n_sim
-#             like+=(
-#                 pdf(Normal(),((down_data[1,i] - sim_dat[j][2][1,i])/h[1]))
-#                 *pdf(Normal(),((down_data[2,i] - sim_dat[j][2][2,i])/h[2]))
-#                 *pdf(Normal(),((price_data[i] - sim_dat[j][3][i])/h[3]))
-#                 )
-#         end
-#         # println("like is: ", like, " log of which is: ", log(like/(n_sim*h[1]*h[2]*h[3])))
-#         if like == 0
-#         #     # println("Like is zero!!!")
-#             ll+= -n_firms
-#             n_zeros += 1
-#         else
-#             ll+=log(like/(n_sim*h[1]*h[2]*h[3]))
-#             # ll+=like
-#         end
-
-
-#     end
-#     if mod(time(),10)<.1
-#         println("I'm worker number $(myid()) on thread $(Threads.threadid()), and I reside on machine $(gethostname()).")
-
-#         println("worker id: ", myid()," parameter: ", round.(b, digits=20), " function value: ", -ll/n_firms, " Number of zeros: ", n_zeros)
-#     end
-#     return -ll/n_firms
-# end
-# interrupt()

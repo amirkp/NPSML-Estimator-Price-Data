@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=ak68
-#SBATCH --partition=interactive
+#SBATCH --partition=scavenge
 #SBATCH --ntasks=100
 #SBATCH --ntasks-per-core=1
 #SBATCH --mem-per-cpu=800MB
