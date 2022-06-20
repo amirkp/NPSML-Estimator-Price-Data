@@ -51,11 +51,11 @@ end
                
 end
 
-@everywhere function replicate_byseed(n_rep, n_firms, n_sim)
+@everywhere function replicate_byseed(n_rep, n_firms, n_sim, h_scale)
 
  
 
-    #      [β11u, β12u, β21u, β11u, β11d, β12d, β21u, β13u, β33d]
+    #[β11u, β12u, β21u, β11u, β11d, β12d, β21u, β13u, β33d]
 
 
     up_data, down_data, price_data =
@@ -89,6 +89,10 @@ end
 
     
     @show h = abs.(Optim.minimizer(res_bcv))
+    
+    h[1] = h[1] * h_scale[1]
+    h[2] = h[2] * h_scale[2]
+    h[3] = h[3] * h_scale[3]
     
     
     
@@ -140,8 +144,8 @@ end
         return -ll/n_firms
     end
     bbo_search_range = (-5,5)
-    bbo_population_size =75
-    bbo_max_time=3600*(n_sim/25)*4
+    bbo_population_size =50
+    bbo_max_time=3400
     bbo_ndim = 10
     bbo_feval = 50000
 
@@ -156,16 +160,32 @@ end
 
 # replicate_byseed(2, 100,25) 
 
-# Parameter estimates 
-for n_sim =25:25:50
-    for n_firms = 200:100:200
-        est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim),1:n_reps)
-        estimation_result = Dict()
-        push!(estimation_result, "beta_hat" => reduce(vcat, [est_pars[i][1] for i =1:n_reps]'))
-        push!(estimation_result, "fitness" => reduce(vcat, [est_pars[i][2] for i =1:n_reps]'))
-        push!(estimation_result, "bw" => reduce(vcat, [est_pars[i][3] for i =1:n_reps]'))
-        bson("/home/ak68/03/est_$(n_firms)_sim_$(n_sim).bson", estimation_result)
-        # bson("/Users/amir/github/NPSML-Estimator-Price-Data/Price Estimation April 2022/NOTS/LogNormal/01/est_$(n_firms)_sim_$(n_sim).bson", estimation_result)
+h_mat = zeros(27, 3)
+scales = [0.5 1. 2.]
+count = 1
+for i1 = 1:3
+    for i2 =  1:3
+        for i3  = 1:3
+            h_mat[count, :] = [scales[i1] scales[i2] scales[i3]]
+            global count+=1
+        end
     end
 end
+
+
+# Parameter estimates 
+for h_id =9:12
+    for n_sim =25:25:25
+        for n_firms = 100:100:100
+            est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim, h_mat[h_id,:]), 1:n_reps)
+            estimation_result = Dict()
+            push!(estimation_result, "beta_hat" => reduce(vcat, [est_pars[i][1] for i =1:n_reps]'))
+            push!(estimation_result, "fitness" => reduce(vcat, [est_pars[i][2] for i =1:n_reps]'))
+            push!(estimation_result, "bw" => reduce(vcat, [est_pars[i][3] for i =1:n_reps]'))
+            bson("/home/ak68/h_vary1/est_$(n_firms)_sim_$(n_sim)_$(h_mat[h_id, 1])_$(h_mat[h_id, 2])_$(h_mat[h_id, 3]).bson", estimation_result)
+            # bson("/Users/amir/github/NPSML-Estimator-Price-Data/Price Estimation April 2022/NOTS/LogNormal/h_vary/est_$(n_firms)_sim_$(n_sim)_$(h_mat[h_id, 1])_$(h_mat[h_id, 2])_$(h_mat[h_id, 3]).bson", estimation_result)
+        end
+    end
+end
+
 

@@ -2,67 +2,62 @@
 ### Simulation using finite market approximation. 
 # package for parallel computation
 
-using Distributed
-
-# pids = addprocs_slurm(10)
-# addprocs(10)
+using Distributed, ClusterManagers
+pids = addprocs_slurm(parse(Int, ENV["SLURM_NTASKS"]))
 using BSON
-# using FLoops
-  
-# @everywhere using Optim    # Nelder-Mead Local Optimizer
-# @everywhere using CMAEvolutionStrategy # Global Optimizer
 
 @everywhere begin
     using LinearAlgebra
     using Random
     using Distributions
     using BlackBoxOptim
-    # using Plots
     using Assignment
-    # using BenchmarkTools
     using Optim
-    # using CMAEvolutionStrategy
+    using CMAEvolutionStrategy
     include("JV_DGP-LogNormal.jl")
 end
 
 @everywhere begin 
-    n_reps = 2 # Number of replications (fake datasets)
+    n_reps =nworkers() # Number of replications (fake datasets)
     true_pars = [-2.5, 1.5, -1.5, -.5, 3.5, 2.5, 1.5, -3, 3, -3.]
-end
-
-@everywhere function replicate_byseed(n_rep, n_firms, n_sim)
-
     Σ_up = [0 .1;
-            0 .2;
-            0 .1]
+        0 .2;
+        0 .1]
 
 
     Σ_down =  [0 .3;
                0 .4;
                0 .1]
-
-    #      [β11u, β12u, β21u, β11u, β11d, β12d, β21u, β13u, β33d]
-
-
+    
     function par_gen(b)
-        bup = [
-            vcat(b[1:2],b[8])';
-            vcat(b[3:4], 0.)';
-            vcat(0 , 0, 0)'
-        ]
+            bup = [
+                vcat(b[1:2],b[8])';
+                vcat(b[3:4], 0.)';
+                vcat(0 , 0, 0)'
+            ]
 
 
-        bdown = [
-            vcat(b[5], b[6],0)';
-            vcat(b[7], 0, 0)';
-            vcat(0 ,0., b[9] )'
-        ]
+            bdown = [
+                vcat(b[5], b[6],0)';
+                vcat(b[7], 0, 0)';
+                vcat(0 ,0., b[9] )'
+            ]
 
         return bup, bdown
     end
 
 
     bup, bdown = par_gen(true_pars)
+               
+end
+
+@everywhere function replicate_byseed(n_rep, n_firms, n_sim, h_scale)
+
+ 
+
+    #[β11u, β12u, β21u, β11u, β11d, β12d, β21u, β13u, β33d]
+
+
     up_data, down_data, price_data =
         sim_data_JV_LogNormal(bup, bdown, Σ_up, Σ_down, n_firms, 38+n_rep, false, 0, 0, true_pars[10])
 
@@ -95,6 +90,10 @@ end
     
     @show h = abs.(Optim.minimizer(res_bcv))
     
+    h[1] = h[1] * h_scale[1]
+    h[2] = h[2] * h_scale[2]
+    h[3] = h[3] * h_scale[3]
+    
     
     
     function loglike(b)
@@ -112,7 +111,7 @@ end
     
         solve_draw =  x->sim_data_JV_up_obs(bup, bdown , Σ_up, Σ_down, n_firms, 360+x, true, up_data[1:2,:],b[10])
     
-        sim_dat = pmap(solve_draw, 1:n_sim)
+        sim_dat = map(solve_draw, 1:n_sim)
         ll=0.0
         n_zeros = 0
         for i =1:n_firms
@@ -136,74 +135,57 @@ end
     
     
         end
-        if mod(time(),10)<1
+        if mod(time(),10)<.01
             println("I'm worker number $(myid()) on thread $(Threads.threadid()), and I reside on machine $(gethostname()).")
 
-            println("worker id: ", myid()," parameter: ", round.(b, digits=3), " function value: ", -ll/n_firms, " Number of zeros: ", n_zeros)
+            println(" parameter: ", round.(b, digits=4), " function value: ", -ll/n_firms, " Number of zeros: ", n_zeros)
         end
+        Random.seed!()
         return -ll/n_firms
     end
-    # println("worker id: ", myid())
-    # return loglike(true_pars)
-
-    # # return loglike(vcat(true_pars, 1))
-    # res_CMAE = CMAEvolutionStrategy.minimize(loglike, rand(10), 1.,
-    #     lower = nothing,
-    #     upper = nothing,
-    #     noise_handling = nothing,
-    #     callback = (object, inputs, function_values, ranks) -> nothing,
-    #     parallel_evaluation = false,
-    #     multi_threading = false,
-    #     verbosity = 1,
-    #     seed = rand(UInt),
-    #     maxtime = 100,
-    #     maxiter = nothing,
-    #     maxfevals = 20000,
-    #     ftarget = nothing,
-    #     xtol = nothing,
-    #     ftol = 1e-4)
-    
-
-
-    # # # Estimated parameters: 
-    # println("Best Cand:  " ,xbest(res_CMAE))
-    # return xbest(res_CMAE), fbest(res_CMAE), h 
-    # opt = bbsetup(loglike; SearchRange = bbo_search_range, NumDimensions =bbo_ndim,  Method = :simultaneous_perturbation_stochastic_approximation, MaxTime = bbo_max_time)
-
-    # bbsolution = bboptimize(opt)
-
-
     bbo_search_range = (-5,5)
-    bbo_population_size =50
-    bbo_max_time=100
+    bbo_population_size =75
+    bbo_max_time=3600*1.5
     bbo_ndim = 10
-    bbo_feval = 1000
-
-    # opt = bbsetup(loglike; SearchRange = bbo_search_range, 
-    #   NumDimensions =bbo_ndim, PopulationSize = bbo_population_size, 
-    #   Method = :adaptive_de_rand_1_bin_radiuslimited, MaxFuncEvals = bbo_feval,
-    #   TraceInterval=10.0, TraceMode=:compact)
-
+    bbo_feval = 50000
 
     bbsolution1 = bboptimize(loglike; SearchRange = bbo_search_range, 
         NumDimensions =bbo_ndim, PopulationSize = bbo_population_size,
         Method = :adaptive_de_rand_1_bin_radiuslimited, MaxFuncEvals = bbo_feval,
-        MaxTime = bbo_max_time, TraceInterval=10.0, TraceMode=:compact)
-    return best_candidate(bbsolution1), best_fitness(bbsolution1)
+        MaxTime = bbo_max_time , TraceInterval=60.0, TraceMode=:compact)
+
+    return best_candidate(bbsolution1), best_fitness(bbsolution1), h 
 end
+
 
 # replicate_byseed(2, 100,25) 
 
-# Parameter estimates 
-for n_sim =25:25:25
-    for n_firms = 100:100:100
-        println("Available workers: ", workers()," pids", getpid())
-        est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim),1:n_reps)
-        # est_pars = asyncmap(x->replicate_byseed(x, n_firms, n_sim),1:n_reps; ntasks=20)
-        
-        estimation_result = Dict()
-        push!(estimation_result, "beta_hat" => est_pars)
-        bson("/home/ak68/01/est_$(n_firms)_sim_$(n_sim).bson", estimation_result)
+h_mat = zeros(27, 3)
+scales = [0.5 1. 2.]
+count = 1
+for i1 = 1:3
+    for i2 =  1:3
+        for i3  = 1:3
+            h_mat[count, :] = [scales[i1] scales[i2] scales[i3]]
+            global count+=1
+        end
     end
 end
+
+
+# Parameter estimates 
+for h_id = 1:5
+    for n_sim =25:25:25
+        for n_firms = 100:100:100
+            est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim, h_mat[h_id,:]), 1:n_reps)
+            estimation_result = Dict()
+            push!(estimation_result, "beta_hat" => reduce(vcat, [est_pars[i][1] for i =1:n_reps]'))
+            push!(estimation_result, "fitness" => reduce(vcat, [est_pars[i][2] for i =1:n_reps]'))
+            push!(estimation_result, "bw" => reduce(vcat, [est_pars[i][3] for i =1:n_reps]'))
+            bson("/home/ak68/h_vary/est_$(n_firms)_sim_$(n_sim)_$(h_mat[h_id, 1])_$(h_mat[h_id, 2])_$(h_mat[h_id, 3]).bson", estimation_result)
+            # bson("/Users/amir/github/NPSML-Estimator-Price-Data/Price Estimation April 2022/NOTS/LogNormal/h_vary/est_$(n_firms)_sim_$(n_sim)_$(h_mat[h_id, 1])_$(h_mat[h_id, 2])_$(h_mat[h_id, 3]).bson", estimation_result)
+        end
+    end
+end
+
 
