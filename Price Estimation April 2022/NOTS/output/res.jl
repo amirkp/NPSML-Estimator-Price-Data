@@ -32,8 +32,8 @@ function res_fun(PATH, true_pars, verbose=:false)
     fit = out["fitness"]
     if verbose==true
         for i = 1:size(est)[1]
-            println(round.(est[i,:], digits=3),round.(fit[i], digits=2))
-            sleep(0.5)
+            println("Pars: ", round.(est[i,:], digits=2), " Fitness: ", round.(fit[i], digits=2))
+            sleep(0.1)
         end
     end
 
@@ -46,7 +46,7 @@ function res_fun(PATH, true_pars, verbose=:false)
     m_h = mean(bw, dims=1)
     # println("True parameters: ", true_pars)
     # sleep(1)
-    # println("Bias: ", round.(bias, digits=2))
+    println("Bias: ", round.(bias, digits=2))
     # sleep(1)
     println("RMSE: ",round.(MSE, digits=2))
     # sleep(1)
@@ -74,18 +74,36 @@ end
 
 
 for h_id = 1:23 
-    path= "/Users/amir/out/h_vary1/est_100_sim_25_$(h_mat[h_id, 1])_$(h_mat[h_id, 2])_$(h_mat[h_id, 3]).bson"
+    # path= "/Users/amir/out/h_vary1/est_100_sim_25_$(h_mat[h_id, 1])_$(h_mat[h_id, 2])_$(h_mat[h_id, 3]).bson"
+    path= "/Users/akp/out/h_vary1/est_100_sim_25_$(h_mat[h_id, 1])_$(h_mat[h_id, 2])_$(h_mat[h_id, 3]).bson"
     est=  res_fun(path, true_pars);
 end
 
-h_id = 1
-path= "/Users/amir/out/h_vary1/est_100_sim_25_$(h_mat[h_id, 1])_$(h_mat[h_id, 2])_$(h_mat[h_id, 3]).bson"
-est=  res_fun(path, true_pars, true);
+h_id = 14;
+# path= "/Users/amir/out/h_vary1/est_100_sim_25_$(h_mat[h_id, 1])_$(h_mat[h_id, 2])_$(h_mat[h_id, 3]).bson"
+path= "/Users/akp/out/h_vary1/est_100_sim_25_$(h_mat[h_id, 1])_$(h_mat[h_id, 2])_$(h_mat[h_id, 3]).bson";
+est=  res_fun(path, true_pars);
+h_id = 12 ;
+path= "/Users/akp/out/h_vary1/est_100_sim_25_$(h_mat[h_id, 1])_$(h_mat[h_id, 2])_$(h_mat[h_id, 3]).bson";
+res_fun(path, true_pars);
+
+res_fun(path, true_pars, true);
 
 
+h_mat
 
 
+path = "/Users/akp/out/02/est_100_sim_25.bson";
+res_fun(path, true_pars);
 
+path = "/Users/akp/output/02/est_100_sim_25.bson";
+res_fun(path, true_pars);
+
+path = "/Users/akp/out/03/est_200_sim_25.bson";
+res_fun(path, true_pars);
+
+path = "/Users/akp/out/03/est_200_sim_50.bson";
+res_fun(path, true_pars, true);
 
 
 
