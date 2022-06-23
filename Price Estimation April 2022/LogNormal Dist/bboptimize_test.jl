@@ -2,6 +2,9 @@
 # and how often 
 
 using Distributed
+using PrettyTables
+using BSON
+
 addprocs()
 @everywhere using Optim
 @everywhere begin
@@ -46,7 +49,7 @@ end
     # up1, down1, price1 =sim_data_LP(bup, bdown, sig_up, sig_down, n_firms,36)
     mu_price = mean(price_data)
     # mu_price1 = mean(price1)
-    tpar = [-2.5, 1.5, -.5, -.5, 3.5, 1.5, 1.5, 1, 1]
+    tpar = [-2.5, 1.5, -1.5, -.5, 3.5, 2.5, 1.5, -3, 3,-3]
 end
 
 
@@ -107,7 +110,7 @@ end
 ###################
 
 @everywhere function loglike(b)
-    n_sim=25
+    n_sim=100
 
 
     bup = [
@@ -149,38 +152,44 @@ end
 
 
     end
-    # if mod(time(),10)<.1
+    if mod(time(),10)<.1
         println("parameter: ", round.(b, digits=3), " function value: ", -ll/n_firms, " Number of zeros: ", n_zeros)
-    # end
+    end
     Random.seed!()
-    sleep(1)
+    # sleep(1)
     return -ll/n_firms
 end
 
 
-loglike(vcat(tpar,-3.));
+@show loglike(vcat(tpar[1:9], -2));
 
 @everywhere function opt_test(i)
     opt_res = zeros(11)
-    bbo_search_range = (-5,5)
+    bbo_search_range = (-10,10)
     bbo_population_size =50
-    bbo_max_time=10
+    bbo_max_time=2500
     bbo_ndim = 10
-    opt = bbsetup(loglike; SearchRange = bbo_search_range, NumDimensions =bbo_ndim, PopulationSize = 50 , Method = :adaptive_de_rand_1_bin_radiuslimited, MaxTime = bbo_max_time, Workers=[myid()]);
+    opt = bbsetup(loglike; SearchRange = bbo_search_range, NumDimensions =bbo_ndim, PopulationSize = 50 ,
+     Method = :adaptive_de_rand_1_bin_radiuslimited, MaxTime = bbo_max_time, TraceInterval=10);
     #large bandwidth 
     sol = bboptimize(opt)
     opt_res[1:10] = best_candidate(sol)
     opt_res[11] = best_fitness(sol)
     return opt_res
 end
-opt_results = pmap(opt_test, 1:24)
+# opt_results = pmap(opt_test, 1:24)
+
+# res_mat = reduce(vcat, opt_results')
+# pretty_table(res_mat)
 
 
 
-Best candidate found: [-1.38179, 1.82535, -2.32995, -1.09383, 1.91383, 3.04601, 2.27473, 0.139386, 2.0953, -4.51509]
 
-Fitness: 0.637851640
+opt_results_med = pmap(opt_test, 1:24)
+res_mat_med = reduce(vcat, opt_results_med')
+pretty_table(res_mat_med)
 
-Best candidate found: [-2.95712, 1.54338, -1.26552, -0.542106, 3.81525, 2.30953, 1.30612, 0.0908555, 2.83207, -3.29611]
-
-Fitness: 0.601385005
+# estimation_result = Dict()
+# push!(estimation_result, "beta_hat" => res_mat)
+# push!(estimation_result, "beta_hat2" => res_mat_med)
+# bson("/Users/akp/github/NPSML-Estimator-Price-Data/Price Estimation April 2022/LogNormal Dist/bbotest/opt_results24.bson", estimation_result)

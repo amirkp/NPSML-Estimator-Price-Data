@@ -43,7 +43,8 @@ function sim_data_JV_LogNormal(β_up, β_down, Σ_up, Σ_down, n_firms,i, flag, 
     end
 
 
-    d_min_prof = findmin(down_match_profit_data)[1]
+    # d_min_prof = findmin(down_match_profit_data)[1]
+    d_min_prof = median(down_match_profit_data)
 
     profit_diff = d_min_prof_input - d_min_prof
     down_match_profit_data .= down_match_profit_data .+ profit_diff
@@ -102,7 +103,9 @@ function sim_data_JV_up_obs(β_up, β_down, Σ_up, Σ_down, n_firms,i, flag, obs
         down_match_profit_data[i] = down_profit_data[match[i][2]]
     end
 
-    d_min_prof = findmin(down_match_profit_data)[1]
+    # d_min_prof = findmin(down_match_profit_data)[1]
+    d_min_prof = median(down_match_profit_data)
+
 
     profit_diff = d_min_prof_input - d_min_prof
     down_match_profit_data .= down_match_profit_data .+ profit_diff

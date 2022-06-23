@@ -28,7 +28,8 @@ function sim_data_LP(β_up, β_down, Σ_up, Σ_down, n_firms,i)
     down_match_data_lp = Transpose(γ *Transpose(down_data))
 
 
-    minv= minimum(v)
+    # minv= minimum(v)
+    minv = median(v)
     up_profit_data_lp= u.+ minv
     down_profit_data_lp= v.- minv
     # println("Minimum down profit was: ", minv, " is: ", minimum(v))
@@ -40,6 +41,9 @@ function sim_data_LP(β_up, β_down, Σ_up, Σ_down, n_firms,i)
 
     return up_data, down_match_data_lp,  up_prices_lp
 end
+
+
+
 #
 #
 # Random.seed!(1234)
