@@ -5,7 +5,7 @@ using Distributed
 using PrettyTables
 using BSON
 
-addprocs()
+addprocs(2)
 @everywhere using Optim
 @everywhere begin
     using LinearAlgebra
@@ -45,13 +45,12 @@ end
         sig_down = [0 .3;
                     0 .4;
                     0 .1]
-    up_data, down_data, price_data, upr, dpr= sim_data_JV_LogNormal(bup, bdown, sig_up, sig_down, n_firms, 28, false, 0, 0,-3.)
+    up_data, down_data, price_data, upr, dpr= sim_data_JV_LogNormal(bup, bdown, sig_up, sig_down, n_firms, 28, false, 0, 0,2.)
     # up1, down1, price1 =sim_data_LP(bup, bdown, sig_up, sig_down, n_firms,36)
     mu_price = mean(price_data)
     # mu_price1 = mean(price1)
-    tpar = [-2.5, 1.5, -1.5, -.5, 3.5, 2.5, 1.5, -3, 3,-3]
+    tpar = [-2.5, 1.5, -1.5, -.5, 3.5, 2.5, 1.5, -3, 3,2]
 end
-
 
 ########################
 ########################
@@ -110,7 +109,7 @@ end
 ###################
 
 @everywhere function loglike(b)
-    n_sim=100
+    n_sim=25
 
 
     bup = [
@@ -150,7 +149,7 @@ end
             # ll+=like
         end
 
-
+        
     end
     if mod(time(),10)<.1
         println("parameter: ", round.(b, digits=3), " function value: ", -ll/n_firms, " Number of zeros: ", n_zeros)
@@ -160,32 +159,42 @@ end
     return -ll/n_firms
 end
 
+res=Optim.optimize(x->loglike(vcat(tpar[1:8], x)),rand(2))
 
-@show loglike(vcat(tpar[1:9], -2));
+
+Optim.minimizer(res)
+
+Optim.optimize(x->loglike(vcat(tpar[1:9], x)), -10, 10)
+
+
 
 @everywhere function opt_test(i)
     opt_res = zeros(11)
     bbo_search_range = (-10,10)
     bbo_population_size =50
-    bbo_max_time=2500
-    bbo_ndim = 10
-    opt = bbsetup(loglike; SearchRange = bbo_search_range, NumDimensions =bbo_ndim, PopulationSize = 50 ,
+    bbo_ndim = 3
+    bbo_max_time=15*2^bbo_ndim
+    fun = x->loglike(vcat(tpar[1:7],x))
+    opt = bbsetup(fun; SearchRange = bbo_search_range, NumDimensions =bbo_ndim, PopulationSize = 50 ,
      Method = :adaptive_de_rand_1_bin_radiuslimited, MaxTime = bbo_max_time, TraceInterval=10);
     #large bandwidth 
     sol = bboptimize(opt)
-    opt_res[1:10] = best_candidate(sol)
-    opt_res[11] = best_fitness(sol)
+    # opt_res[1:10] = best_candidate(sol)
+    # opt_res[1] = best_candidate(sol)
+    # opt_res[11] = best_fitness(sol)
+    opt_res = vcat(best_candidate(sol), best_fitness(sol))
     return opt_res
 end
-# opt_results = pmap(opt_test, 1:24)
 
+# opt_results = pmap(opt_test, 1:24)
+# interrupt()
 # res_mat = reduce(vcat, opt_results')
 # pretty_table(res_mat)
 
 
 
 
-opt_results_med = pmap(opt_test, 1:24)
+opt_results_med = pmap(opt_test, 1:4)
 res_mat_med = reduce(vcat, opt_results_med')
 pretty_table(res_mat_med)
 
