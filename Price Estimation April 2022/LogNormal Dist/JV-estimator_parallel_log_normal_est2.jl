@@ -23,7 +23,7 @@ end
 #ceo disu for labor 
 
 @everywhere begin
-        n_firms=200
+        n_firms=500
 
         bup = [-2.5 1.5 1;
                -.5 -.5 0;

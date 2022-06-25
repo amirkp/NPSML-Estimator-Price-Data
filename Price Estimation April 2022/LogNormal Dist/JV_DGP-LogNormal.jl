@@ -65,7 +65,7 @@ function sim_data_JV_up_obs(β_up, β_down, Σ_up, Σ_down, n_firms,i, flag, obs
         up_data[1,:] = rand(Random.seed!(1234+i), LogNormal(Σ_up[1,1], Σ_up[1,2]), n_firms)
         up_data[2,:] = rand(Random.seed!(1234+2i), LogNormal(Σ_up[2,1], Σ_up[2,2]), n_firms)
         up_data[3,:] = rand(Random.seed!(1234+3i), LogNormal(Σ_up[3,1], Σ_up[3,2]), n_firms)
-
+        
 
         down_data = Array{Float64, 2}(undef, 3, n_firms)
         down_data[1,:] = rand(Random.seed!(1234+4i), LogNormal(Σ_down[1,1], Σ_down[1,2]), n_firms)

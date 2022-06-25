@@ -4,7 +4,7 @@
 using Distributed
 using BSON
 # using FLoops
-addprocs(24)    # Cores  (This is for #444 Mac Pro)
+addprocs()    # Cores  (This is for #444 Mac Pro)
 @everywhere using Optim    # Nelder-Mead Local Optimizer
 @everywhere using CMAEvolutionStrategy # Global Optimizer
 
@@ -23,15 +23,14 @@ end
 
 @everywhere begin 
     n_reps = 24 # Number of replications (fake datasets)
-    # n_sim =25
-    true_pars = [-2.5, 1.5, -.5, -.5, 3.5, 1.5, 1.5, 1, 1, 3.]
+    true_pars =  [-2.5, 1.5, -1.5, -.5, 3.5, 2.5, 1.5, -3, -8, 8]
 end
 
 
 
 
 @everywhere function replicate_byseed(n_rep, n_firms, n_sim)
-
+    n_rep =12
     Σ_up = [0 .1;
             0 .2;
             0 .1]
@@ -64,7 +63,7 @@ end
 
     bup, bdown = par_gen(true_pars)
     up_data, down_data, price_data =
-        sim_data_JV_LogNormal(bup, bdown, Σ_up, Σ_down, n_firms, 38+n_rep, false, 0, 0, 3.)
+        sim_data_JV_LogNormal(bup, bdown, Σ_up, Σ_down, n_firms, 38+n_rep, false, 0, 0, true_pars[10])
     # println("hi after fake data")
     # mean of transfers in the data
     # mu_price = mean(price_data)
@@ -100,8 +99,9 @@ end
     res_bcv = Optim.optimize(x->bcv2_fun(x,down_data[1:2,inds],price_data[inds]), [0.1,.1,.1])
     # # res_bcv = Optim.optimize(bcv2_fun, [0.1,.1,.1])
     @show h = abs.(Optim.minimizer(res_bcv))
+    
     # h[2] = h[2]/2
-    h[3] = h[3]/2
+    # h[3] = h[3]/4
     # h =[0.01, 0.2, 0.07]
     # # Silverman
     # m=3
@@ -116,7 +116,7 @@ end
         
     
         bup = [
-            vcat(b[1:2], abs(b[8]))';
+            vcat(b[1:2], (b[8]))';
             vcat(b[3:4], 0.)';
             vcat(0 , 0, 0)'
         ]
@@ -124,7 +124,7 @@ end
         bdown = [
             vcat(b[5], b[6],0)';
             vcat(b[7], 0, 0)';
-            vcat(0 ,0., abs(b[9]) )'
+            vcat(0 ,0., (b[9]) )'
          ]
     
         # bup = [
@@ -139,7 +139,7 @@ end
         #     vcat(0 ,0., 1. )'
         #  ]
     
-        solve_draw =  x->sim_data_JV_up_obs(bup, bdown , Σ_up, Σ_down, n_firms, 360+x, true, up_data[1:2,:],3.)
+        solve_draw =  x->sim_data_JV_up_obs(bup, bdown , Σ_up, Σ_down, n_firms, 360+x, true, up_data[1:2,:],b[10])
     
         sim_dat = map(solve_draw, 1:n_sim)
         # sim_dat = solve_draw.(1:n_sim)
@@ -176,10 +176,10 @@ end
     
     
         end
-        if mod(time(),10)<0.1
-            println("parameter: ", round.(b, digits=3), " function value: ", -ll/n_firms, " Number of zeros: ", n_zeros)
-        end
-
+        # if mod(time(),10)<0.1
+            # println("parameter: ", round.(b, digits=3), " function value: ", -ll/n_firms, " Number of zeros: ", n_zeros)
+        # end
+        Random.seed!()
         return -ll/n_firms
     end
 
@@ -212,10 +212,10 @@ end
     # bbsolution = bboptimize(opt)
 
 
-    bbo_search_range = (-5,5)
-    bbo_population_size =50
-    bbo_max_time=3600*(n_firms/100)
-    bbo_ndim = 9
+    bbo_search_range = (-20,20)
+    bbo_population_size =100
+    bbo_max_time=200*2
+    bbo_ndim = 5
     bbo_feval = 30000
 
     # opt = bbsetup(loglike; SearchRange = bbo_search_range, 
@@ -223,25 +223,86 @@ end
     #   Method = :adaptive_de_rand_1_bin_radiuslimited, MaxFuncEvals = bbo_feval,
     #   TraceInterval=10.0, TraceMode=:compact)
 
+    fun = x->loglike(vcat(true_pars[1:5],x))
 
-    bbsolution1 = bboptimize(loglike; SearchRange = bbo_search_range, 
+    cbf = x-> println("parameter: ", round.(best_candidate(x), digits=3), " n_rep: ", n_rep, " fitness: ", best_fitness(x) )
+    # 
+    bbsolution1 = bboptimize(fun; SearchRange = bbo_search_range, 
         NumDimensions =bbo_ndim, PopulationSize = bbo_population_size, 
         Method = :adaptive_de_rand_1_bin_radiuslimited, MaxFuncEvals = bbo_feval,
-        TraceInterval=60.0, TraceMode=:compact, Workers=[myid()]) 
-    return bbsolution1
+        TraceInterval=50.0, TraceMode=:compact, MaxTime = bbo_max_time,
+        CallbackInterval=20, FitnessTolerance=1e-3,
+        CallbackFunction= cbf) 
+    # return bbsolution1
+    opt_res = vcat(best_candidate(bbsolution1), best_fitness(bbsolution1))
+    opt2 = Optim.optimize(fun, best_candidate(bbsolution1), time_limit=150)
+    opt_res = vcat(Optim.minimizer(opt2), Optim.minimum(opt2))
+    println("best cand: ",Optim.minimizer(opt2) )
+    println("improvement: ", Optim.minimum(opt2) - best_fitness(bbsolution1))
+    println("changes: ",round.(best_candidate(bbsolution1) - Optim.minimizer(opt2) , digits=4) )
+    return opt_res
 end
 
 # replicate_byseed(2, 100,25) 
 
 # Parameter estimates 
-for n_sim =25:25:25
-    for n_firms = 100:100:100
+for n_sim =51:25:51
+    for n_firms = 50:100:50
         est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim),1:n_reps)
         estimation_result = Dict()
         push!(estimation_result, "beta_hat" => est_pars)
-        bson("LogNormal Dist/MC/04/est_abs_$(n_firms)_sim_$(n_sim).bson", estimation_result)
+        # bson("LogNormal Dist/MC/04/est_abs_$(n_firms)_sim_$(n_sim).bson", estimation_result)
+        bson("/Users/akp/github/NPSML-Estimator-Price-Data/Price Estimation April 2022/LogNormal Dist/MC/06 2par/est_abs_$(n_firms)_sim_$(n_sim).bson", estimation_result)
     end
 end
+res = BSON.load("/Users/akp/github/NPSML-Estimator-Price-Data/Price Estimation April 2022/LogNormal Dist/MC/06 2par/est_abs_50_sim_51.bson");
+est = reduce(vcat,res["beta_hat"]');
+mean(est, dims=1)
+est
+stop
+
+
+
+
+
+1×3 Matrix{Float64}:
+ 0.0407936  -0.927353  3.86432
+
+ 1×3 Matrix{Float64}:
+ 0.623851  -0.39205  3.65069
+
+ 1×3 Matrix{Float64}:
+ 0.623851  -0.39205  3.65069
+
+
+ 1×3 Matrix{Float64}:
+ 0.623851  -0.39205  3.65069
+
+ 1×3 Matrix{Float64}:
+ 0.188597  -0.86655  0.40441
+ 1×3 Matrix{Float64}:
+ -0.0203868  -1.0999  0.951601
+
+
+ 0.164359  11.0318  0.651847
+ 1×3 Matrix{Float64}:
+ -1.79046  9.12177  0.715513
+
+ 
+
+
+
+scatter(down_data[2,:], price_data, markersize =2)
+scatter(up_data[1,:], down_data[3,:], markersize = 2)
+
+
+
+
+
+From worker 25:   parameter: [-2.5, 1.5, -1.5, -0.5, 3.5, 2.5, 1.5, -3.0, -0.003, -1.547] function value: 3.155296138701713 Number of zeros: 0
+
+
+
 
 
 

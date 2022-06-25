@@ -5,7 +5,7 @@ using Distributed
 using PrettyTables
 using BSON
 
-addprocs(2)
+addprocs()
 @everywhere using Optim
 @everywhere begin
     using LinearAlgebra
@@ -27,7 +27,7 @@ end
 #ceo disu for labor 
 
 @everywhere begin
-        n_firms=50
+        n_firms=100
 
         bup = [-2.5 1.5 -3;
                -1.5 -.5 0;
@@ -45,7 +45,7 @@ end
         sig_down = [0 .3;
                     0 .4;
                     0 .1]
-    up_data, down_data, price_data, upr, dpr= sim_data_JV_LogNormal(bup, bdown, sig_up, sig_down, n_firms, 28, false, 0, 0,2.)
+    up_data, down_data, price_data, upr, dpr= sim_data_JV_LogNormal(bup, bdown, sig_up, sig_down, n_firms, 22, false, 0, 0,2.)
     # up1, down1, price1 =sim_data_LP(bup, bdown, sig_up, sig_down, n_firms,36)
     mu_price = mean(price_data)
     # mu_price1 = mean(price1)
@@ -58,6 +58,7 @@ end
 ########################
 ########################
 ########################
+
 
 @everywhere function bcv2_fun(h)
     h=abs.(h)
@@ -84,6 +85,7 @@ end
 @everywhere res_bcv = Optim.optimize(bcv2_fun, [0.1,0.1,0.1])
 # res_bcv = Optim.optimize(bcv2_fun, rand(3),BFGS(),autodiff = :forward)
 
+
 @everywhere @show h = abs.(Optim.minimizer(res_bcv))
 
 
@@ -109,7 +111,7 @@ end
 ###################
 
 @everywhere function loglike(b)
-    n_sim=25
+    n_sim=50
 
 
     bup = [
@@ -158,6 +160,7 @@ end
     # sleep(1)
     return -ll/n_firms
 end
+loglike(tpar)
 
 res=Optim.optimize(x->loglike(vcat(tpar[1:8], x)),rand(2))
 
@@ -172,9 +175,9 @@ Optim.optimize(x->loglike(vcat(tpar[1:9], x)), -10, 10)
     opt_res = zeros(11)
     bbo_search_range = (-10,10)
     bbo_population_size =50
-    bbo_ndim = 3
-    bbo_max_time=15*2^bbo_ndim
-    fun = x->loglike(vcat(tpar[1:7],x))
+    bbo_ndim = 2
+    bbo_max_time=1000
+    fun = x->loglike(vcat(tpar[1:8],x))
     opt = bbsetup(fun; SearchRange = bbo_search_range, NumDimensions =bbo_ndim, PopulationSize = 50 ,
      Method = :adaptive_de_rand_1_bin_radiuslimited, MaxTime = bbo_max_time, TraceInterval=10);
     #large bandwidth 
@@ -194,11 +197,20 @@ end
 
 
 
-opt_results_med = pmap(opt_test, 1:4)
+opt_results_med = pmap(opt_test, 1:24)
 res_mat_med = reduce(vcat, opt_results_med')
+
 pretty_table(res_mat_med)
 
 # estimation_result = Dict()
-# push!(estimation_result, "beta_hat" => res_mat)
+# # push!(estimation_result, "beta_hat" => res_mat)
 # push!(estimation_result, "beta_hat2" => res_mat_med)
-# bson("/Users/akp/github/NPSML-Estimator-Price-Data/Price Estimation April 2022/LogNormal Dist/bbotest/opt_results24.bson", estimation_result)
+# push!(estimation_result, "notes" => notes)
+
+# bson("/Users/akp/github/NPSML-Estimator-Price-Data/Price Estimation April 2022/LogNormal Dist/bbotest/2pars_eqsel_b33.bson", estimation_result)
+
+
+interrupt()
+
+# notes= "True parameters are (3,2). all except for eqsel and b_33d are fixed at truth
+#      estimation is with 100 firms and 50 simulations. all optimizations instances converge to the same point."
