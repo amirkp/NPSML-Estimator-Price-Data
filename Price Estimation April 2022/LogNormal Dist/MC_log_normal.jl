@@ -23,14 +23,15 @@ end
 
 @everywhere begin 
     n_reps = 24 # Number of replications (fake datasets)
-    true_pars =  [-2.5, 1.5, -1.5, -.5, 3.5, 2.5, 1.5, -3, -8, 8]
+    # true_pars =  [-2.5, 1.5, -1.5, -.5, 3.5, 2.5, 1.5, 3, -3, 3]
+    true_pars = round.(randn(Random.seed!(1224),10)*3, digits = 1)
 end
 
 
 
 
 @everywhere function replicate_byseed(n_rep, n_firms, n_sim)
-    n_rep =12
+    n_rep =22
     Σ_up = [0 .1;
             0 .2;
             0 .1]
@@ -99,20 +100,11 @@ end
     res_bcv = Optim.optimize(x->bcv2_fun(x,down_data[1:2,inds],price_data[inds]), [0.1,.1,.1])
     # # res_bcv = Optim.optimize(bcv2_fun, [0.1,.1,.1])
     @show h = abs.(Optim.minimizer(res_bcv))
-    
-    # h[2] = h[2]/2
-    # h[3] = h[3]/4
-    # h =[0.01, 0.2, 0.07]
-    # # Silverman
-    # m=3
-    # S=cov(hcat(down_data[1,:], down_data[2,:], price_data))
-    # H_Silverman = (4/(n_sim*n_firms*(m+2)))^(2/(m+4)) * S
-    # @show h= 0.25 .* sqrt.(diag(H_Silverman))
+    # h= h*5
 
-    # println("hi before function")
-    println("hi", n_sim)
+
+
     function loglike(b)
-        # n_sim=50
         
     
         bup = [
@@ -127,17 +119,7 @@ end
             vcat(0 ,0., (b[9]) )'
          ]
     
-        # bup = [
-        #     vcat(b[1:2], 1.)';
-        #     vcat(b[3:4], 0.)';
-        #     vcat(0 , 0, 0)'
-        # ]
-    
-        # bdown = [
-        #     vcat(b[5], b[6],0)';
-        #     vcat(b[7], 0, 0)';
-        #     vcat(0 ,0., 1. )'
-        #  ]
+
     
         solve_draw =  x->sim_data_JV_up_obs(bup, bdown , Σ_up, Σ_down, n_firms, 360+x, true, up_data[1:2,:],b[10])
     
@@ -197,7 +179,7 @@ end
     #     maxiter = nothing,
     #     maxfevals = 20000,
     #     ftarget = nothing,
-    #     xtol = nothing,
+    #     xtol = 1e-3,
     #     ftol = 1e-4)
     # res = Evolutionary.optimize(loglike, rand(9), CMAES())
     # return Evolutionary.minimizer(res), Evolutionary.minimum(res)
@@ -205,57 +187,48 @@ end
 
 
     # # # Estimated parameters: 
-    # println("Best Cand:  " ,xbest(res_CMAE))
-    # return xbest(res_CMAE), fbest(res_CMAE), h 
-    # opt = bbsetup(loglike; SearchRange = bbo_search_range, NumDimensions =bbo_ndim,  Method = :simultaneous_perturbation_stochastic_approximation, MaxTime = bbo_max_time)
-
-    # bbsolution = bboptimize(opt)
-
-
     bbo_search_range = (-20,20)
     bbo_population_size =100
-    bbo_max_time=200*2
-    bbo_ndim = 5
-    bbo_feval = 30000
-
-    # opt = bbsetup(loglike; SearchRange = bbo_search_range, 
-    #   NumDimensions =bbo_ndim, PopulationSize = bbo_population_size, 
-    #   Method = :adaptive_de_rand_1_bin_radiuslimited, MaxFuncEvals = bbo_feval,
-    #   TraceInterval=10.0, TraceMode=:compact)
-
-    fun = x->loglike(vcat(true_pars[1:5],x))
+    bbo_max_time=5000
+    bbo_ndim = 10
+    bbo_feval = 100000
+    fun = x->loglike(vcat(x))
 
     cbf = x-> println("parameter: ", round.(best_candidate(x), digits=3), " n_rep: ", n_rep, " fitness: ", best_fitness(x) )
-    # 
+    
     bbsolution1 = bboptimize(fun; SearchRange = bbo_search_range, 
         NumDimensions =bbo_ndim, PopulationSize = bbo_population_size, 
         Method = :adaptive_de_rand_1_bin_radiuslimited, MaxFuncEvals = bbo_feval,
-        TraceInterval=50.0, TraceMode=:compact, MaxTime = bbo_max_time,
-        CallbackInterval=20, FitnessTolerance=1e-3,
+        TraceInterval=30.0, TraceMode=:compact, MaxTime = bbo_max_time,
+        CallbackInterval=170, FitnessTolerance=1e-4,
         CallbackFunction= cbf) 
     # return bbsolution1
-    opt_res = vcat(best_candidate(bbsolution1), best_fitness(bbsolution1))
-    opt2 = Optim.optimize(fun, best_candidate(bbsolution1), time_limit=150)
-    opt_res = vcat(Optim.minimizer(opt2), Optim.minimum(opt2))
+    # opt_res = vcat(best_candidate(bbsolution1), best_fitness(bbsolution1))
+    opt2 = Optim.optimize(fun, best_candidate(bbsolution1), time_limit=200)
+    
+    opt_res2 = vcat(Optim.minimizer(opt2), Optim.minimum(opt2))
     println("best cand: ",Optim.minimizer(opt2) )
     println("improvement: ", Optim.minimum(opt2) - best_fitness(bbsolution1))
     println("changes: ",round.(best_candidate(bbsolution1) - Optim.minimizer(opt2) , digits=4) )
-    return opt_res
+    println("true_pars: ", true_pars)
+    return opt_res2
 end
 
 # replicate_byseed(2, 100,25) 
 
 # Parameter estimates 
-for n_sim =51:25:51
-    for n_firms = 50:100:50
+for n_sim =25:25:25
+    for n_firms =  25:100:25
         est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim),1:n_reps)
         estimation_result = Dict()
         push!(estimation_result, "beta_hat" => est_pars)
         # bson("LogNormal Dist/MC/04/est_abs_$(n_firms)_sim_$(n_sim).bson", estimation_result)
-        bson("/Users/akp/github/NPSML-Estimator-Price-Data/Price Estimation April 2022/LogNormal Dist/MC/06 2par/est_abs_$(n_firms)_sim_$(n_sim).bson", estimation_result)
+        bson("/Users/akp/github/NPSML-Estimator-Price-Data/Price Estimation April 2022/LogNormal Dist/MC/06 2par/est_abs_$(n_firms)_sim_$(n_sim)_10par_randn.bson", estimation_result)
     end
 end
-res = BSON.load("/Users/akp/github/NPSML-Estimator-Price-Data/Price Estimation April 2022/LogNormal Dist/MC/06 2par/est_abs_50_sim_51.bson");
+res = BSON.load("/Users/akp/github/"*
+            "NPSML-Estimator-Price-Data/Price Estimation April 2022/LogNormal Dist/MC"*
+            "/06 2par/est_abs_25_sim_25_10par_randn.bson");
 est = reduce(vcat,res["beta_hat"]');
 mean(est, dims=1)
 est
