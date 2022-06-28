@@ -232,44 +232,6 @@ opt_33 = bbsetup(loglike; SearchRange = bbo_search_range, NumDimensions =bbo_ndi
 sol33 = bboptimize(opt_33)
 println(round.(best_candidate(sol33), digits=3))
 println(best_fitness(sol32))
-# altpar = best_candidate(smaller_bw_sol1)
-sol22
-# [-3.016, 0.882, -0.67, -0.111, 3.151, -0.121, 0.803, 0.042, -0.216, 1.357] function value: -2.6738246697409935
-
-# [-3.033628667531997, 0.8226415225489178, -0.6353453347920984, -0.0817466294926248, 3.2314522185925916, -0.33718104808090443, 0.8151541380850537, 0.05546259388310969, -0.04389629889560204, 1.159638109739515]
-
-# [-2.8228519400802385, 0.8120016777171333, -0.7250174472258168, -0.17270303569713408, 2.9039990663655617, -0.3070823613283061, 1.011256815897797, -0.10079343886375196, 0.2700811808559984, 1.334893213532981]
-[-2.461, 3.111, -0.374, -2.015, 1.71, 3.99, 1.624, -0.068, 0.766, 3.0] function value: -2.1011348662814724 Number of zeros: 0
-# -2.7325939401282295
-
-
-res_CMAE = CMAEvolutionStrategy.minimize(loglike, vcat(tpar,1.), 1.,
-    lower = nothing,
-    upper = nothing,
-    noise_handling = nothing,
-    callback = (object, inputs, function_values, ranks) -> nothing,
-    parallel_evaluation = false,
-    multi_threading = false,
-    verbosity = 1,
-    seed = rand(UInt),
-    maxtime = (n_firms/100)*2000,
-    maxiter = nothing,
-    maxfevals = nothing,
-    ftarget = nothing,
-    xtol = nothing,
-    ftol = 1e-6)
-
-# bbsolution1 = bboptimize(opt1)
-# best_candidate(bbsolution1)
-
-
-
-
-
-
-
-
-
 
 
 
