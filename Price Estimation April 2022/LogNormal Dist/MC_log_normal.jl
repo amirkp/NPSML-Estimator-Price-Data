@@ -23,15 +23,15 @@ end
 
 @everywhere begin 
     n_reps = 24 # Number of replications (fake datasets)
-    # true_pars =  [-2.5, 1.5, -1.5, -.5, 3.5, 2.5, 1.5, 3, -3, 3]
-    true_pars = round.(randn(Random.seed!(1224),10)*3, digits = 1)
+    true_pars =  [-2.5, 1.5, -1.5, -.5, 3.5, 2.5, 1.5, 3, -3, 3]
+    # true_pars = round.(randn(Random.seed!(1224),10)*3, digits = 1)
 end
 
 
 
 
 @everywhere function replicate_byseed(n_rep, n_firms, n_sim)
-    n_rep =22
+    # n_rep =22
     Σ_up = [0 .1;
             0 .2;
             0 .1]
@@ -64,7 +64,8 @@ end
 
     bup, bdown = par_gen(true_pars)
     up_data, down_data, price_data =
-        sim_data_JV_LogNormal(bup, bdown, Σ_up, Σ_down, n_firms, 38+n_rep, false, 0, 0, true_pars[10])
+        sim_data_JV_LogNormal(bup, bdown, Σ_up, Σ_down, n_firms
+            , 38+n_rep, false, 0, 0, true_pars[10])
     # println("hi after fake data")
     # mean of transfers in the data
     # mu_price = mean(price_data)
@@ -124,14 +125,7 @@ end
         solve_draw =  x->sim_data_JV_up_obs(bup, bdown , Σ_up, Σ_down, n_firms, 360+x, true, up_data[1:2,:],b[10])
     
         sim_dat = map(solve_draw, 1:n_sim)
-        # sim_dat = solve_draw.(1:n_sim)
-        # sim_dat = solve_draw.(1:n_sim)
-        # sim_dat = []
-        # for i = 1:n_sim
-        #     push!(sim_dat, solve_draw(i))
-        # end
-
-
+    
 
         
 
@@ -165,31 +159,12 @@ end
         return -ll/n_firms
     end
 
-    # # return loglike(vcat(true_pars, 1))
-    # res_CMAE = CMAEvolutionStrategy.minimize(loglike, rand(9), 1.,
-    #     lower = nothing,
-    #     upper = nothing,
-    #     noise_handling = nothing,
-    #     callback = (object, inputs, function_values, ranks) -> nothing,
-    #     parallel_evaluation = false,
-    #     multi_threading = false,
-    #     verbosity = 1,
-    #     seed = rand(UInt),
-    #     maxtime = (n_firms/100)*1000,
-    #     maxiter = nothing,
-    #     maxfevals = 20000,
-    #     ftarget = nothing,
-    #     xtol = 1e-3,
-    #     ftol = 1e-4)
-    # res = Evolutionary.optimize(loglike, rand(9), CMAES())
-    # return Evolutionary.minimizer(res), Evolutionary.minimum(res)
-
 
 
     # # # Estimated parameters: 
-    bbo_search_range = (-20,20)
+    bbo_search_range = (-10,10)
     bbo_population_size =100
-    bbo_max_time=5000
+    bbo_max_time=10000
     bbo_ndim = 10
     bbo_feval = 100000
     fun = x->loglike(vcat(x))
@@ -200,11 +175,11 @@ end
         NumDimensions =bbo_ndim, PopulationSize = bbo_population_size, 
         Method = :adaptive_de_rand_1_bin_radiuslimited, MaxFuncEvals = bbo_feval,
         TraceInterval=30.0, TraceMode=:compact, MaxTime = bbo_max_time,
-        CallbackInterval=170, FitnessTolerance=1e-4,
+        CallbackInterval=170,
         CallbackFunction= cbf) 
     # return bbsolution1
     # opt_res = vcat(best_candidate(bbsolution1), best_fitness(bbsolution1))
-    opt2 = Optim.optimize(fun, best_candidate(bbsolution1), time_limit=200)
+    opt2 = Optim.optimize(fun, best_candidate(bbsolution1), time_limit=400)
     
     opt_res2 = vcat(Optim.minimizer(opt2), Optim.minimum(opt2))
     println("best cand: ",Optim.minimizer(opt2) )
@@ -217,22 +192,30 @@ end
 # replicate_byseed(2, 100,25) 
 
 # Parameter estimates 
-for n_sim =25:25:25
-    for n_firms =  25:100:25
+for n_sim =50:25:50
+    for n_firms =  100:100:100
         est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim),1:n_reps)
         estimation_result = Dict()
         push!(estimation_result, "beta_hat" => est_pars)
-        # bson("LogNormal Dist/MC/04/est_abs_$(n_firms)_sim_$(n_sim).bson", estimation_result)
-        bson("/Users/akp/github/NPSML-Estimator-Price-Data/Price Estimation April 2022/LogNormal Dist/MC/06 2par/est_abs_$(n_firms)_sim_$(n_sim)_10par_randn.bson", estimation_result)
+        bson("/Users/akp/github/NPSML-Estimator-Price-Data"*
+        "/Price Estimation April 2022/LogNormal Dist/MC/eqsel/"*
+       "est_abs_$(n_firms)_sim_$(n_sim)_10par_randn.bson", estimation_result)
     end
 end
+
+
 res = BSON.load("/Users/akp/github/"*
             "NPSML-Estimator-Price-Data/Price Estimation April 2022/LogNormal Dist/MC"*
-            "/06 2par/est_abs_25_sim_25_10par_randn.bson");
+            "/06 2par/est_abs_100_sim_25_10par_randn.bson");
 est = reduce(vcat,res["beta_hat"]');
 mean(est, dims=1)
-est
-stop
+
+
+true_pars'
+
+scatter(up_data[2,:], down_data[2,:], markersize=2)
+scatter(up_data[1,:], down_data[2,:])
+scatter(up_data[1,:], price_data)
 
 
 
