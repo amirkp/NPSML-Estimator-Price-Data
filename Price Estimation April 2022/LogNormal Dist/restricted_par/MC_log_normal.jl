@@ -4,7 +4,7 @@
 using Distributed
 using BSON
 # using FLoops
-addprocs(2)    # Cores  (This is for #444 Mac Pro)
+addprocs()    # Cores  (This is for #444 Mac Pro)
 @everywhere using Optim    # Nelder-Mead Local Optimizer
 
 @everywhere begin
@@ -151,7 +151,7 @@ end
     
         end
         # if mod(time(),10)<0.1
-            println("parameter: ", round.(b, digits=3), " function value: ", -ll/n_firms, " Number of zeros: ", n_zeros)
+            # println("parameter: ", round.(b, digits=3), " function value: ", -ll/n_firms, " Number of zeros: ", n_zeros)
         # end
         Random.seed!()
         return -ll/n_firms
@@ -178,7 +178,7 @@ end
         NumDimensions =bbo_ndim, PopulationSize = bbo_population_size, 
         Method = :adaptive_de_rand_1_bin_radiuslimited, MaxFuncEvals = bbo_feval,
         TraceInterval=30.0, TraceMode=:compact, MaxTime = bbo_max_time,
-        CallbackInterval=70,
+        CallbackInterval=13,
         CallbackFunction= cbf) 
     # return bbsolution1
     # opt_res = vcat(best_candidate(bbsolution1), best_fitness(bbsolution1))
@@ -209,12 +209,21 @@ for j = 1:10
 end
 
 
-/Users/amir/github/NPSML-Estimator-Price-Data/Price Estimation April 2022/LogNormal Dist/restricted_par/MC_log_normal.jl
-res = BSON.load("/Users/akp/github/"*
-            "NPSML-Estimator-Price-Data/Price Estimation April 2022/LogNormal Dist/MC"*
-            "/06 2par/est_abs_100_sim_25_10par_randn.bson");
-est = reduce(vcat,res["beta_hat"]');
-mean(est, dims=1)
+res_1p = zeros(2, 10)
+for j = 1:10
+    res = BSON.load("/Users/akp/github/"*
+                "NPSML-Estimator-Price-Data/Price Estimation April 2022/LogNormal Dist"*
+                "/restricted_par/est_100_sim_50_par_$(j)");
+    est = reduce(vcat,res["beta_hat"]')[:,1]
+    bias =est .- true_pars[j]
+    res_1p[1,j] = mean(bias)
+    res_1p[2,j] = sqrt(mean(bias.^2))
+end
+
+res_1p
+
+
+
 
 
 true_pars'
