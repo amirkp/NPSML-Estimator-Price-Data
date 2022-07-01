@@ -163,7 +163,7 @@ end
 
     bbo_search_range = (-10,10)
     bbo_population_size =10
-    bbo_max_time=length(par_ind)^2 * 100
+    bbo_max_time=length(par_ind)^2 * 50
     bbo_ndim = length(par_ind)
     bbo_feval = 100000
     function fun(x)
@@ -197,7 +197,7 @@ end
 # Parameter estimates 
 for j = 1:10
     for n_sim =50:25:50
-        for n_firms =  100:100:100
+        for n_firms =  50:100:50
             est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim, [j]),1:n_reps )
             estimation_result = Dict()
             push!(estimation_result, "beta_hat" => est_pars)

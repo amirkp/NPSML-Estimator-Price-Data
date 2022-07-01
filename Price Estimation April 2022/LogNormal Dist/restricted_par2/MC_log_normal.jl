@@ -68,7 +68,7 @@ end
     ind_sample = sample(1:3000, n_firms, replace= false);
     up_data =up_data[:, ind_sample];
     down_data= down_data[:, ind_sample];
-    price_data= price_data[:, ind_sample];
+    price_data= price_data[ ind_sample];
 
     # println("hi after fake data")
     # mean of transfers in the data
@@ -169,7 +169,7 @@ end
 
     bbo_search_range = (-10,10)
     bbo_population_size =10
-    bbo_max_time=length(par_ind)^2 * 50
+    bbo_max_time=length(par_ind)^2 * 60 * (n_firms/50)
     bbo_ndim = length(par_ind)
     bbo_feval = 100000
     function fun(x)
@@ -188,7 +188,7 @@ end
         CallbackFunction= cbf) 
     # return bbsolution1
     # opt_res = vcat(best_candidate(bbsolution1), best_fitness(bbsolution1))
-    opt2 = Optim.optimize(fun, best_candidate(bbsolution1), time_limit=100)
+    opt2 = Optim.optimize(fun, best_candidate(bbsolution1), time_limit=50)
     
     opt_res2 = vcat(Optim.minimizer(opt2), Optim.minimum(opt2))
     println("best cand: ",Optim.minimizer(opt2) )
@@ -203,12 +203,12 @@ end
 # Parameter estimates 
 for j = 1:10
     for n_sim =50:25:50
-        for n_firms =  50:100:50
+        for n_firms =  100:100:100
             est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim, [j]),1:n_reps )
             estimation_result = Dict()
             push!(estimation_result, "beta_hat" => est_pars)
             bson("/Users/akp/github/NPSML-Estimator-Price-Data"*
-            "/Price Estimation April 2022/LogNormal Dist/restricted_par/"*
+            "/Price Estimation April 2022/LogNormal Dist/restricted_par2/"*
             "est_$(n_firms)_sim_$(n_sim)_par_$(j)", estimation_result)
         end
     end

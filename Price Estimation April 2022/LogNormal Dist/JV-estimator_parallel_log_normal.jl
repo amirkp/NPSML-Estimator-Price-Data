@@ -144,7 +144,7 @@ pl5 = scatter(up_data[2,inds], price_data, markersize =2)
     solve_draw =  x->sim_data_JV_up_obs(bup, bdown , sig_up, sig_down, n_firms, 360+x, true, up_data[1:2,:],b[10])
 
     sim_dat = pmap(solve_draw, 1:n_sim, batch_size=10)
-    return sim_dat
+    # return sim_dat
     ll=0.0
     
 
@@ -180,11 +180,12 @@ end
 
 
 simdat = loglike(vcat(tpar,-3.))
-j = 5
+
 up = reduce(hcat, [reduce(hcat, [(simdat[i][1])[1:2,j] for i =1:100]) for j= 1:200])
 down =   reduce(hcat, [reduce(hcat, [(simdat[i][2])[1:2,j] for i =1:100]) for j= 1:200])
 price =  reduce(vcat, [reduce(vcat, [(simdat[i][3])[j] for i =1:100]) for j= 1:200])
-scatter(down[2,:], price, markersize= 1)
+
+scatter(down[1,:], price, markersize= 1)
 
 var(down_data[1,:])
 var(down[1,:])
@@ -222,7 +223,7 @@ llike2p([-1,-2.])
 bbo_search_range = (-5,5)
 bbo_population_size =50
 SMM_session =1
-bbo_max_time=22000
+bbo_max_time=10000
 bbo_ndim = 10
 
 opt_33 = bbsetup(loglike; SearchRange = bbo_search_range, 
@@ -236,6 +237,12 @@ println(best_fitness(sol32))
 
 
 
+est_pars= best_candidate(sol33)
+loglike(est_pars)
+
+xs = -2:0.05:4.
+scatter(xs, [loglike(vcat(est_pars[1:6], xs[i],est_pars[8:10])) for i =1:length(xs)],
+        markersize=2)
 
 
 
