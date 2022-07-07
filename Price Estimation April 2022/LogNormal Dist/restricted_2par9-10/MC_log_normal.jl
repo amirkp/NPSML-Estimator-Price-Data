@@ -169,7 +169,7 @@ end
 
     bbo_search_range = (-10,10)
     bbo_population_size =10
-    bbo_max_time=length(par_ind)^2 * 60 * (n_firms/50)
+    bbo_max_time=length(par_ind)^2 * 60 *(n_firms/2)
     bbo_ndim = length(par_ind)
     bbo_feval = 100000
     function fun(x)
@@ -179,57 +179,55 @@ end
     end
 
     cbf = x-> println("parameter: ", round.(best_candidate(x), digits=3), " n_rep: ", n_rep, " fitness: ", best_fitness(x) )
+    opt_mat =zeros(5,3)
+    for i = 1:5
+        bbsolution1 = bboptimize(fun; SearchRange = bbo_search_range, 
+            NumDimensions =bbo_ndim, PopulationSize = bbo_population_size, 
+            Method = :adaptive_de_rand_1_bin_radiuslimited, MaxFuncEvals = bbo_feval,
+            TraceInterval=30.0, TraceMode=:compact, MaxTime = bbo_max_time,
+            CallbackInterval=13,
+            CallbackFunction= cbf) 
     
-    bbsolution1 = bboptimize(fun; SearchRange = bbo_search_range, 
-        NumDimensions =bbo_ndim, PopulationSize = bbo_population_size, 
-        Method = :adaptive_de_rand_1_bin_radiuslimited, MaxFuncEvals = bbo_feval,
-        TraceInterval=30.0, TraceMode=:compact, MaxTime = bbo_max_time,
-        CallbackInterval=13,
-        CallbackFunction= cbf) 
-    # return bbsolution1
-    # opt_res = vcat(best_candidate(bbsolution1), best_fitness(bbsolution1))
-    opt2 = Optim.optimize(fun, best_candidate(bbsolution1), time_limit=100)
-    
-    opt_res2 = vcat(Optim.minimizer(opt2), Optim.minimum(opt2))
-    println("best cand: ",Optim.minimizer(opt2) )
-    println("improvement: ", Optim.minimum(opt2) - best_fitness(bbsolution1))
-    println("changes: ",round.(best_candidate(bbsolution1) - Optim.minimizer(opt2) , digits=4) )
-    println("true_pars: ", true_pars)
-    return opt_res2
+        @show opt2 = Optim.optimize(fun, best_candidate(bbsolution1), time_limit=30)
+        @show opt_mat[i,:] = vcat(Optim.minimizer(opt2), Optim.minimum(opt2))'
+    end
+    return opt_mat
 end
 
 # replicate_byseed(2, 100,25) 
 
 # Parameter estimates 
-for j = 1:9
+for j = 9:9
     for n_sim =50:25:50
-        for n_firms =  100:100:100
+        for n_firms =  50:50:100
             est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim, [j, j+1]),1:n_reps )
             estimation_result = Dict()
             push!(estimation_result, "beta_hat" => est_pars)
             bson("/Users/akp/github/NPSML-Estimator-Price-Data"*
-            "/Price Estimation April 2022/LogNormal Dist/restricted_2par/"*
+            "/Price Estimation April 2022/LogNormal Dist/restricted_2par9-10/"*
             "est_$(n_firms)_sim_$(n_sim)_par_$(j)", estimation_result)
         end
     end
 end
 
 
+
+
 res_1p = zeros(2, 10)
 for j = 1:10
     res = BSON.load("/Users/akp/github/"*
                 "NPSML-Estimator-Price-Data/Price Estimation April 2022/LogNormal Dist"*
-                "/restricted_par/est_100_sim_50_par_$(j)");
-    est = reduce(vcat,res["beta_hat"]')[:,1]
+                "/restricted_2par9-10/est_100_sim_50_par_9");
+    est = reduce(vcat,res["beta_hat"]')
     bias =est .- true_pars[j]
     res_1p[1,j] = mean(bias)
     res_1p[2,j] = sqrt(mean(bias.^2))
 end
 
 res_1p
+res["beta_hat"]
 
-
-
+est
 
 
 true_pars'
