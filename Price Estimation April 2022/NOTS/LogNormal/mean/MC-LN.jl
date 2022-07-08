@@ -20,8 +20,8 @@ end
     n_reps =nworkers() # Number of replications (fake datasets)
     true_pars = [-2.5, 1.5, -1.5, -.5, 3.5, 2.5, 1.5, -3, 3, -3.]
     Σ_up = [0 .1;
-        0 .2;
-        0 .1]
+            0 .2;
+            0 .1]
 
 
     Σ_down =  [0 .3;
@@ -58,8 +58,13 @@ end
 
 
     up_data, down_data, price_data =
-        sim_data_JV_LogNormal(bup, bdown, Σ_up, Σ_down, n_firms, 38+n_rep, false, 0, 0, true_pars[10], sel_mode)
-
+    sim_data_JV_LogNormal(bup, bdown, Σ_up, Σ_down, 3000
+        , 38+n_rep, false, 0, 0, true_pars[10], sel_mode)
+    
+    ind_sample = sample(1:3000, n_firms, replace= false);
+    up_data =up_data[:, ind_sample];
+    down_data= down_data[:, ind_sample];
+    price_data= price_data[ ind_sample];
 
 
     function bcv2_fun(h, down_data, price_data)
@@ -142,12 +147,13 @@ end
         Random.seed!()
         return -ll/n_firms
     end
-    bbo_search_range = (-5,5)
+
+    bbo_search_range = (-10,10)
     bbo_population_size =100
     bbo_max_time=10000
     bbo_ndim = 10
     bbo_feval = 50000
-    fun = x->loglike(vcat(x))
+    fun = x->loglike(x)
     cbf = x-> println("parameter: ", round.(best_candidate(x), digits=3), " n_rep: ", n_rep, " fitness: ", best_fitness(x) )
     
     bbsolution1 = bboptimize(fun; SearchRange = bbo_search_range, 
@@ -157,7 +163,7 @@ end
         CallbackInterval=170,
         CallbackFunction= cbf) 
     
-    opt2 = Optim.optimize(fun, best_candidate(bbsolution1), time_limit=300)
+    opt2 = Optim.optimize(fun, best_candidate(bbsolution1), time_limit=150)
 
     opt_res2 = vcat(Optim.minimizer(opt2), Optim.minimum(opt2), h)
     println("best cand: ",Optim.minimizer(opt2) )
@@ -168,20 +174,15 @@ end
     return opt_res2
 end
 
-
-
 # Parameter estimates 
 
 for n_sim =50:25:50
     for n_firms = 100:100:100
         est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim, [1., 1., 1.], "mean"), 1:n_reps)
         estimation_result = Dict()
-        push!(estimation_result, "beta_hat" => reduce(vcat, [est_pars[i][1] for i =1:n_reps]'))
-        push!(estimation_result, "fitness" => reduce(vcat, [est_pars[i][2] for i =1:n_reps]'))
-        push!(estimation_result, "bw" => reduce(vcat, [est_pars[i][3] for i =1:n_reps]'))
-        bson("/home/ak68/mean_median/est_$(n_firms)_sim_$(n_sim)_mean.bson", estimation_result)
+        push!(estimation_result, "beta_hat" => reduce(vcat, [est_pars[i][1:10] for i =1:n_reps]'))
+        push!(estimation_result, "fitness" => reduce(vcat, [est_pars[i][11] for i =1:n_reps]'))
+        push!(estimation_result, "bw" => reduce(vcat, [est_pars[i][12:14] for i =1:n_reps]'))
+        bson("/home/ak68/mean/est_$(n_firms)_sim_$(n_sim)_mean.bson", estimation_result)
     end
 end
-
-
-
