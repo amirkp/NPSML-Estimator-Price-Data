@@ -16,13 +16,16 @@ addprocs()    # Cores  (This is for #444 Mac Pro)
     using Assignment
     using BenchmarkTools
     include("JV_DGP-LogNormal.jl")
+    include("JV_DGP-mvLogNormal.jl")
     # include("LP_DGP.jl")
 end
 
 @everywhere begin 
     n_reps =24 # Number of replications (fake datasets)
     true_pars =  [-2.5, 1.5, -1.5, -.5, 3.5, 2.5, 1.5, 3, -3, 3]
-    # true_pars = round.(randn(Random.seed!(1224),10)*3, digits = 1)
+    true_pars =  [2.5, .5, -1.5, -1.5, -3.5, 2.5, 2.5, 1, -3, 3]
+
+    true_pars = round.(randn(Random.seed!(1224),10)*3, digits = 2)
 end
 
 
@@ -30,14 +33,15 @@ end
 
 @everywhere function replicate_byseed(n_rep, n_firms, n_sim, par_ind)
     # n_rep =22
-    Σ_up = [0 .1;
-            0 .2;
-            0 .1]
+    Σ_up = zeros(3,3)
+    tmp = [.3 .1; .4 -.2]
+    Σ_up[1:2, 1:2] = tmp*tmp'
+    Σ_up[3,3] = .1
 
-
-    Σ_down =  [0 .3;
-               0 .4;
-               0 .1]
+    Σ_down = zeros(3,3)
+    tmp = [.6 -.1; .4 -.2]
+    Σ_down[1:2, 1:2] = tmp*tmp'
+    Σ_down[3,3] = .1
 
     #      [β11u, β12u, β21u, β11u, β11d, β12d, β21u, β13u, β33d]
 
@@ -46,7 +50,7 @@ end
         bup = [
             vcat(b[1:2],b[8])';
             vcat(b[3:4], 0.)';
-            vcat(0 , 0, 0)'
+            vcat(1 , 0, 0)'
         ]
 
 
@@ -62,10 +66,10 @@ end
 
     bup, bdown = par_gen(true_pars)
     up_data, down_data, price_data =
-        sim_data_JV_LogNormal(bup, bdown, Σ_up, Σ_down, 3000
+        sim_data_JV_LogNormal(bup, bdown, Σ_up, Σ_down, 1000
             , 38+n_rep, false, 0, 0, true_pars[10])
         
-    ind_sample = sample(1:3000, n_firms, replace= false);
+    ind_sample = sample(1:1000, n_firms, replace= false);
     up_data =up_data[:, ind_sample];
     down_data= down_data[:, ind_sample];
     price_data= price_data[ ind_sample];
@@ -115,7 +119,7 @@ end
         bup = [
             vcat(b[1:2], (b[8]))';
             vcat(b[3:4], 0.)';
-            vcat(0 , 0, 0)'
+            vcat(1 , 0, 0)'
         ]
     
         bdown = [
@@ -169,7 +173,7 @@ end
 
     bbo_search_range = (-10,10)
     bbo_population_size =10
-    bbo_max_time=length(par_ind)^2 * 60 *(n_firms/2)*2
+    bbo_max_time=length(par_ind)^2 * 50
     bbo_ndim = length(par_ind)
     bbo_feval = 100000
     function fun(x)
@@ -199,14 +203,14 @@ end
 
 # Parameter estimates 
 for j = 9:9
-    for n_sim =50:25:50
-        for n_firms =  150:50:200
-            est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim, [j, j+1]),1:n_reps )
+    for n_sim =25:25:25
+        for n_firms =  50:50:100
+            est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim, [j, j+1]),1:24 )
             estimation_result = Dict()
             push!(estimation_result, "beta_hat" => est_pars)
             bson("/Users/akp/github/NPSML-Estimator-Price-Data"*
             "/Price Estimation April 2022/LogNormal Dist/restricted_2par9-10/"*
-            "est_$(n_firms)_sim_$(n_sim)_par_$(j)", estimation_result)
+            "est_$(n_firms)_sim_$(n_sim)_par_$(j)_alt4", estimation_result)
         end
     end
 end
