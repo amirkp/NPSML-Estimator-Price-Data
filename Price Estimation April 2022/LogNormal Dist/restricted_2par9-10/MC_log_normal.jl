@@ -169,7 +169,7 @@ end
 
     bbo_search_range = (-10,10)
     bbo_population_size =10
-    bbo_max_time=length(par_ind)^2 * 60 *(n_firms/2)
+    bbo_max_time=length(par_ind)^2 * 60 *(n_firms/2)*2
     bbo_ndim = length(par_ind)
     bbo_feval = 100000
     function fun(x)
@@ -179,8 +179,9 @@ end
     end
 
     cbf = x-> println("parameter: ", round.(best_candidate(x), digits=3), " n_rep: ", n_rep, " fitness: ", best_fitness(x) )
-    opt_mat =zeros(5,3)
-    for i = 1:5
+    nopts=1
+    opt_mat =zeros(nopts,3)
+    for i = 1:nopts
         bbsolution1 = bboptimize(fun; SearchRange = bbo_search_range, 
             NumDimensions =bbo_ndim, PopulationSize = bbo_population_size, 
             Method = :adaptive_de_rand_1_bin_radiuslimited, MaxFuncEvals = bbo_feval,
@@ -199,7 +200,7 @@ end
 # Parameter estimates 
 for j = 9:9
     for n_sim =50:25:50
-        for n_firms =  50:50:100
+        for n_firms =  150:50:200
             est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim, [j, j+1]),1:n_reps )
             estimation_result = Dict()
             push!(estimation_result, "beta_hat" => est_pars)
