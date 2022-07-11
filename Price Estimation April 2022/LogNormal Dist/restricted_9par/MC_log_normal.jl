@@ -22,7 +22,7 @@ end
 
 @everywhere begin 
     n_reps =24 # Number of replications (fake datasets)
-    true_pars =  [2.5, 1.5, -1.5, -.5, -3.5, 2.5, 1.5, 3, -3, 3]
+    true_pars =  [-2.5, 1.5, -1.5, -.5, 3.5, 2.5, 1.5, 3, -3, 3]
     # true_pars =  [2.5, .5, -1.5, -1.5, -3.5, 2.5, 2.5, 1, -3, 3]
 
     # true_pars = round.(randn(Random.seed!(1224),10)*3, digits = 2)
@@ -205,7 +205,7 @@ end
     bbo_search_range = (-10,10)
     bbo_population_size =100
     # bbo_max_time=length(par_ind)^2 * 1
-    bbo_max_time=60*(n_sim/50)
+    bbo_max_time=600
 
     bbo_ndim = length(par_ind)
     bbo_feval = 100000
@@ -250,14 +250,14 @@ end
 # plot(x->loglike(vcat(true_pars[1:8],x,true_pars[10])), -6, 0)
 # Parameter estimates 
 for j = 9:9
-    for n_sim =50:50:100
-        for n_firms =  50:50:50
-            est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim, 1:4) ,1:24 )
+    for n_sim =25:50:25
+        for n_firms =  300:50:300
+            est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim, 9:10) ,1:24 )
             estimation_result = Dict()
             push!(estimation_result, "beta_hat" => est_pars)
             bson("/Users/akp/github/NPSML-Estimator-Price-Data"*
-            "/Price Estimation April 2022/LogNormal Dist/restricted_9par/"*
-            "est_$(n_firms)_sim_$(n_sim)_1-4", estimation_result)
+            "/Price Estimation April 2022/LogNormal Dist/restricted_2par9-10/"*
+            "est_$(n_firms)_sim_$(n_sim)_9-10", estimation_result)
         end
     end
 end
@@ -322,10 +322,53 @@ scatter!(pars[:,1], pars[:,2], markersize=2)
 
 
 
-res = BSON.load("/Users/akp/github/NPSML-Estimator-Price-Data/"*
-    "Price Estimation April 2022/LogNormal Dist/restricted_9par/est_50_sim_25_1-4")
-pars = reduce(vcat,res["beta_hat"])
-scatter(pars[:,1], pars[:,2], markersize = 4)
+
+i =
+j =10
+gr()
+for i = 1:10
+    for j = 1:10
+
+        res = BSON.load("/Users/akp/out/median/est_100_sim_50_mean.bson")
+        pars = res["beta_hat"]
+        display(scatter(pars[:,i], pars[:,j], markersize = 3, color=:red, title="$(i) - $(j)"))
+
+        res = BSON.load("/Users/akp/out/mean/est_100_sim_50_mean.bson")
+        pars = res["beta_hat"]
+        display(scatter!(pars[:,i], pars[:,j], markersize = 3, color="orange"))
+
+        res = BSON.load("/Users/akp/out/min/est_100_sim_50_mean.bson")
+        pars = res["beta_hat"]
+        display(scatter!(pars[:,i], pars[:,j], markersize = 3, color =:yellow))
+
+        sleep(3)
+    end
+end
+
+
+
+res = BSON.load("/Users/akp/out/02/est_100_sim_25.bson")
+# res = BSON.load("/Users/akp/out/03/est_200_sim_25.bson")
+pars = res["beta_hat"]
+display(scatter(pars[:,i], pars[:,j], markersize = 5, color=:red, title="$(i) - $(j)"))
+
+
+# res = BSON.load("/Users/akp/out/02/est_100_sim_50.bson")
+res = BSON.load("/Users/akp/github/NPSML-Estimator-Price-Data/Price Estimation April 2022/LogNormal Dist/restricted_2par9-10/est_300_sim_25_9-10")
+pars = reduce(vcat, res["beta_hat"])
+display(scatter(pars[:,1], pars[:,2], markersize = 3, color=:yellow, title="$(i) - $(j)"))
+
+
+
+for i = 1:10
+    for j = 1:10
+
+        res = BSON.load("/Users/akp/out/median/est_100_sim_50_mean.bson")
+        pars = res["beta_hat"]
+        display(scatter(pars[:,i], pars[:,j], markersize = 3, color=:red, title="$(i) - $(j)"))
+
+    end
+end
 
 
 
@@ -335,16 +378,15 @@ scatter(pars[:,1], pars[:,2], markersize = 4)
 
 
 
-
-
-
-
-
-
+@benchmark up_data, down_data, price_data =
+    sim_data_JV_LogNormal(bup, bdown, Σ_up, Σ_down, 300
+        , 38+n_rep, false, 0, 0, true_pars[10])
 
 
 
 loglike(res["beta_hat"][1])
+
+
 loglike(true_pars)
 
 true_pars'
@@ -353,59 +395,3 @@ scatter(up_data[2,:], down_data[2,:], markersize=2)
 scatter(up_data[1,:], down_data[2,:])
 scatter(up_data[1,:], price_data)
 scatter(up_data[1,:], up_data[2,:])
-using MLJ
-using OutlierDetection
-using OutlierDetectionData: ODDS
-
-
-X= Matrix(up_data[1:2,:]')
-
-X=rand(1000,6)
-
-y = copy(price_data)
-
-y = Matrix(vcat(down_data[1:2,:], price_data')')
-
-# X = rand(1000, 6)
-X1, y = ODDS.load("thyroid")
-# X
-
-# use 50% of the data for training
-train, test = partition(eachindex(y), 0.5, shuffle=true)
-
-# load the detector
-KNN = @iload KNNDetector pkg=OutlierDetectionNeighbors
-
-# instantiate a detector with default parameters, returning scores
-knn = KNN(k=1)
-
-# bind the detector to data and learn a model with all data
-knn_raw = machine(knn, X) |> fit!
-
-transform(knn_raw, rows=test)
-
-knn_probas = machine(ProbabilisticDetector(knn), X) |> fit!
-
-predict(knn_probas, rows=test)
-
-
-knn_classifier = machine(DeterministicDetector(knn), X) |> fit!
-
-
-predict(knn_classifier, rows=test)
-
-
-
-
-
-
-
-
-
-scatter(down_data[2,:], price_data, markersize =2)
-scatter(up_data[1,:], down_data[3,:], markersize = 2)
-
-X
-
-
-
