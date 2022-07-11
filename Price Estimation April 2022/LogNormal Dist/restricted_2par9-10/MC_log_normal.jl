@@ -15,7 +15,7 @@ addprocs()    # Cores  (This is for #444 Mac Pro)
     using Plots
     using Assignment
     using BenchmarkTools
-    include("JV_DGP-LogNormal.jl")
+    # include("JV_DGP-LogNormal.jl")
     include("JV_DGP-mvLogNormal.jl")
     # include("LP_DGP.jl")
 end
@@ -23,9 +23,9 @@ end
 @everywhere begin 
     n_reps =24 # Number of replications (fake datasets)
     true_pars =  [-2.5, 1.5, -1.5, -.5, 3.5, 2.5, 1.5, 3, -3, 3]
-    true_pars =  [2.5, .5, -1.5, -1.5, -3.5, 2.5, 2.5, 1, -3, 3]
+    # true_pars =  [2.5, .5, -1.5, -1.5, -3.5, 2.5, 2.5, 1, -3, 3]
 
-    true_pars = round.(randn(Random.seed!(1224),10)*3, digits = 2)
+    # true_pars = round.(randn(Random.seed!(1224),10)*3, digits = 2)
 end
 
 
@@ -40,17 +40,15 @@ end
 
     Σ_down = zeros(3,3)
     tmp = [.6 -.1; .4 -.2]
-    Σ_down[1:2, 1:2] = tmp*tmp'
+    Σ_down[1:2,1:2] = tmp*tmp'
     Σ_down[3,3] = .1
-
-    #      [β11u, β12u, β21u, β11u, β11d, β12d, β21u, β13u, β33d]
 
 
     function par_gen(b)
         bup = [
             vcat(b[1:2],b[8])';
             vcat(b[3:4], 0.)';
-            vcat(1 , 0, 0)'
+            vcat(0 , 0, 0)'
         ]
 
 
@@ -171,7 +169,7 @@ end
 
     # # # Estimated parameters: 
 
-    bbo_search_range = (-10,10)
+    bbo_search_range = (-30,30)
     bbo_population_size =10
     bbo_max_time=length(par_ind)^2 * 50
     bbo_ndim = length(par_ind)
@@ -184,7 +182,7 @@ end
 
     cbf = x-> println("parameter: ", round.(best_candidate(x), digits=3), " n_rep: ", n_rep, " fitness: ", best_fitness(x) )
     nopts=1
-    opt_mat =zeros(nopts,3)
+    opt_mat =zeros(nopts,2)
     for i = 1:nopts
         bbsolution1 = bboptimize(fun; SearchRange = bbo_search_range, 
             NumDimensions =bbo_ndim, PopulationSize = bbo_population_size, 
@@ -204,13 +202,13 @@ end
 # Parameter estimates 
 for j = 9:9
     for n_sim =25:25:25
-        for n_firms =  50:50:100
-            est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim, [j, j+1]),1:24 )
+        for n_firms =  50:50:50
+            est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim, [j+1]),1:24 )
             estimation_result = Dict()
             push!(estimation_result, "beta_hat" => est_pars)
             bson("/Users/akp/github/NPSML-Estimator-Price-Data"*
             "/Price Estimation April 2022/LogNormal Dist/restricted_2par9-10/"*
-            "est_$(n_firms)_sim_$(n_sim)_par_$(j)_alt4", estimation_result)
+            "est_$(n_firms)_sim_$(n_sim)_par_$(j)_1d", estimation_result)
         end
     end
 end
@@ -229,12 +227,10 @@ for j = 1:10
     res_1p[2,j] = sqrt(mean(bias.^2))
 end
 
-res_1p
+res = BSON.load("/Users/akp/github/NPSML-Estimator-Price-Data/Price Estimation April 2022/LogNormal Dist/restricted_2par9-10/est_50_sim_25_par_9_1d")
+
+
 res["beta_hat"]
-
-est
-
-
 true_pars'
 
 scatter(up_data[2,:], down_data[2,:], markersize=2)
