@@ -15,8 +15,8 @@ addprocs()    # Cores  (This is for #444 Mac Pro)
     using Plots
     using Assignment
     using BenchmarkTools
-    # include("JV_DGP-LogNormal.jl")
-    include("JV_DGP-mvLogNormal.jl")
+    include("JV_DGP-LogNormal.jl")
+    # include("JV_DGP-mvLogNormal.jl")
     # include("LP_DGP.jl")
 end
 
@@ -33,16 +33,24 @@ end
 
 @everywhere function replicate_byseed(n_rep, n_firms, n_sim, par_ind)
     # n_rep =22
-    Σ_up = zeros(3,3)
-    tmp = [.3 .1; .4 -.2]
-    Σ_up[1:2, 1:2] = tmp*tmp'
-    Σ_up[3,3] = .1
+    # Σ_up = zeros(3,3)
+    # tmp = [.3 .1; .4 -.2]
+    # Σ_up[1:2, 1:2] = tmp*tmp'
+    # Σ_up[3,3] = .1
 
-    Σ_down = zeros(3,3)
-    tmp = [.3 -.1; .4 -.2]
-    Σ_down[1:2,1:2] = tmp*tmp'
-    Σ_down[3,3] = .1
+    # Σ_down = zeros(3,3)
+    # tmp = [.3 -.1; .4 -.2]
+    # Σ_down[1:2,1:2] = tmp*tmp'
+    # Σ_down[3,3] = .1
 
+    Σ_up = [0 .1;
+            0 .2;
+            0 .1]
+
+
+    Σ_down =  [0 .3;
+               0 .4;
+               0 .1]
 
     function par_gen(b)
         bup = [
@@ -103,7 +111,7 @@ end
     # inds = rand(1:n_firms, n_sim)
     inds = 1:n_firms
     # # Optimize over choice of h
-    @show res_bcv = Optim.optimize(x->bcv2_fun(x,down_data[1:2,inds],price_data[inds]), [0.01,.02,.2])
+    res_bcv = Optim.optimize(x->bcv2_fun(x,down_data[1:2,inds],price_data[inds]), [0.01,.02,.2])
 
 
     # # res_bcv = Optim.optimize(bcv2_fun, [0.01 ,.01,.01])
@@ -203,9 +211,9 @@ end
     # # # Estimated parameters: 
 
     bbo_search_range = (-10,10)
-    bbo_population_size =100
+    bbo_population_size =60
     # bbo_max_time=length(par_ind)^2 * 1
-    bbo_max_time=600
+    bbo_max_time=100
 
     bbo_ndim = length(par_ind)
     bbo_feval = 100000
@@ -228,7 +236,7 @@ end
             CallbackInterval=13,
             CallbackFunction= cbf) 
     
-        @show opt2 = Optim.optimize(fun, best_candidate(bbsolution1), time_limit=20)
+        @show opt2 = Optim.optimize(fun, best_candidate(bbsolution1), time_limit=15)
         @show opt_mat[i,:] = vcat(Optim.minimizer(opt2), Optim.minimum(opt2))'
     end
 
@@ -250,9 +258,9 @@ end
 # plot(x->loglike(vcat(true_pars[1:8],x,true_pars[10])), -6, 0)
 # Parameter estimates 
 for j = 9:9
-    for n_sim =25:50:25
-        for n_firms =  300:50:300
-            est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim, 9:10) ,1:24 )
+    for n_sim =50:50:50
+        for n_firms =  25:50:25
+            est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim, 9:10) ,1:96 )
             estimation_result = Dict()
             push!(estimation_result, "beta_hat" => est_pars)
             bson("/Users/akp/github/NPSML-Estimator-Price-Data"*
@@ -261,6 +269,19 @@ for j = 9:9
         end
     end
 end
+
+
+
+
+res = BSON.load("/Users/akp/github/NPSML-Estimator-Price-Data"*
+    "/Price Estimation April 2022/LogNormal Dist/restricted_2par9-10/est_200_sim_50_par_9")
+pars = reduce(vcat, res["beta_hat"])
+display(scatter(pars[:,1], pars[:,2],
+    legends=false, markersize = 3, color=:yellow, title="$(i) - $(j)"))
+
+
+
+
 
 
 res_1p = zeros(2, 10)
@@ -354,13 +375,14 @@ display(scatter(pars[:,i], pars[:,j], markersize = 5, color=:red, title="$(i) - 
 
 
 # res = BSON.load("/Users/akp/out/02/est_100_sim_50.bson")
-res = BSON.load("/Users/akp/github/NPSML-Estimator-Price-Data/Price Estimation April 2022/LogNormal Dist/restricted_2par9-10/est_300_sim_25_9-10")
+res = BSON.load("/Users/akp/github/NPSML-Estimator-Price-Data/Price Estimation April 2022/LogNormal Dist/restricted_2par9-10/est_25_sim_25_9-10")
 pars = reduce(vcat, res["beta_hat"])
-display(scatter(pars[:,1], pars[:,2], markersize = 3, color=:yellow, title="$(i) - $(j)"))
+display(scatter(pars[:,1], pars[:,3],
+    legends=false, markersize = 3, color=:yellow, title="$(i) - $(j)"))
 
 
 
-for i = 1:10
+    for i = 1:10
     for j = 1:10
 
         res = BSON.load("/Users/akp/out/median/est_100_sim_50_mean.bson")

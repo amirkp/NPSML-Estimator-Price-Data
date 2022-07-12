@@ -15,8 +15,8 @@ addprocs()    # Cores  (This is for #444 Mac Pro)
     using Plots
     using Assignment
     using BenchmarkTools
-    # include("JV_DGP-LogNormal.jl")
-    include("JV_DGP-mvLogNormal.jl")
+    include("JV_DGP-LogNormal.jl")
+    # include("JV_DGP-mvLogNormal.jl")
     # include("LP_DGP.jl")
 end
 
@@ -33,16 +33,24 @@ end
 
 @everywhere function replicate_byseed(n_rep, n_firms, n_sim, par_ind)
     # n_rep =22
-    Σ_up = zeros(3,3)
-    tmp = [.3 .1; .4 -.2]
-    Σ_up[1:2, 1:2] = tmp*tmp'
-    Σ_up[3,3] = .1
+    # Σ_up = zeros(3,3)
+    # tmp = [.3 .1; .4 -.2]
+    # Σ_up[1:2, 1:2] = tmp*tmp'
+    # Σ_up[3,3] = .1
 
-    Σ_down = zeros(3,3)
-    tmp = [.6 -.1; .4 -.2]
-    Σ_down[1:2,1:2] = tmp*tmp'
-    Σ_down[3,3] = .1
+    # Σ_down = zeros(3,3)
+    # tmp = [.6 -.1; .4 -.2]
+    # Σ_down[1:2,1:2] = tmp*tmp'
+    # Σ_down[3,3] = .1
 
+    Σ_up = [0 .1;
+            0 .2;   
+            0 .1]
+
+
+    Σ_down =  [0 .3;
+               0 .4;
+               0 .1]
 
     function par_gen(b)
         bup = [
@@ -171,7 +179,7 @@ end
 
     bbo_search_range = (-30,30)
     bbo_population_size =10
-    bbo_max_time=length(par_ind)^2 * 50
+    bbo_max_time=120
     bbo_ndim = length(par_ind)
     bbo_feval = 100000
     function fun(x)
@@ -202,13 +210,13 @@ end
 # Parameter estimates 
 for j = 9:9
     for n_sim =25:25:25
-        for n_firms =  50:50:50
-            est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim, [j+1]),1:24 )
+        for n_firms =  10:10:30
+            est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim, [9, 10 ]),1:24 )
             estimation_result = Dict()
             push!(estimation_result, "beta_hat" => est_pars)
             bson("/Users/akp/github/NPSML-Estimator-Price-Data"*
             "/Price Estimation April 2022/LogNormal Dist/restricted_2par9-10/"*
-            "est_$(n_firms)_sim_$(n_sim)_par_$(j)_1d", estimation_result)
+            "est_$(n_firms)_sim_$(n_sim)_par_9-10", estimation_result)
         end
     end
 end
