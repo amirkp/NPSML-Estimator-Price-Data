@@ -1,9 +1,10 @@
 
 
 using Distributed
-addprocs(24)
+addprocs(2)
 @everywhere using Optim
 @everywhere begin
+    using OptimalTransport
     using LinearAlgebra
     using Random
     using Distributions
@@ -23,7 +24,7 @@ end
 #ceo disu for labor 
 
 @everywhere begin
-        n_firms=500
+        n_firms=3000
 
         bup = [-2.5 1.5 3;
                -1.5 -.5 0;
@@ -49,7 +50,42 @@ end
 
 end
 
+A_mat = bup + bdown
+C = -1*Transpose(up_data)*A_mat*down_data #pairwise surplus
+μ = fill(1/n_firms, n_firms)
+ν = fill(1/n_firms, n_firms)
 
+ε = 0.5
+
+# solve entropically regularized optimal transport problem
+ot = quadreg(μ, ν, C, ε)
+
+sum(ot)
+
+ot_down = down_data*ot'*1500
+
+ot_max1 = [findmax(ot[i,:])[2] for i = 1:n_firms]
+
+
+down_max = down_data[:, ot_max1]
+
+
+
+scatter(down_data[2,:],ot_down[2,:],markersize = 1,  ylims=(0,2), xlims=(0,2))
+scatter(up_data[2,:],ot_down[2,:],markersize = 2,  ylims=(0,2), xlims=(0,2))
+scatter(up_data[2,:],down_max[2,:],markersize = 2,  ylims=(0,2), xlims=(0,2))
+
+
+i,j
+scatter(up_data[2,:],down_data[2,:],markersize = 4)
+
+scatter!(up_data[2,:],ot_down[2,:],markersize = 2,  color=:yellow)
+
+ot * 3000
+
+
+findmax(ot[:,3])
+scatter(down_data[1,:],ot[1,:] )
 
 # pl1 = scatter(up_data[1,:], down_data[1,:],markersize =2)
 # pl2 = scatter(up_data[1,:], down_data[2,:],markersize =2)

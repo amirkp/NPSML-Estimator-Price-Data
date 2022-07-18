@@ -2,6 +2,20 @@
 ### Simulation using finite market approximation. 
 # package for parallel computation
 # /Users/akp/github/NPSML-Estimator-Price-Data/Price Estimation April 2022/LogNormal Dist/restricted_9par/MC_log_normal.jl
+######################################
+######################################
+######################################
+######################################
+## estimation with price or matching only 
+######################################
+######################################
+######################################
+## Data created July 18 2022
+## Copied from restricted_9par folder
+## Amir Kazempour
+
+
+
 using Distributed
 using BSON
 # using FLoops
@@ -32,7 +46,7 @@ end
 
 
 
-@everywhere function replicate_byseed(n_rep, n_firms, n_sim, par_ind, globT, locT)
+@everywhere function replicate_byseed(n_rep, n_firms, n_sim, par_ind, globT, locT, data_mode)
 
 
     Σ_up = [0 .1;
@@ -73,14 +87,8 @@ end
     down_data= down_data[:, ind_sample];
     price_data= price_data[ ind_sample];
 
-    # println("hi after fake data")
-    # mean of transfers in the data
-    # mu_price = mean(price_data)
 
 
-    # # h: vector of bandwidths
-    # # function to be minimized over the choice of h
-    # # function uses the fake data above
     function bcv2_fun(h, down_data, price_data)
         h=abs.(h)
         ll = 0.0
@@ -157,11 +165,15 @@ end
         for i =1:n_firms
             like =0.
             for j =1:n_sim
-                like+=(
-                    pdf(Normal(),((down_data[1,i] - sim_dat[j][2][1,i])/h[1]))
-                    *pdf(Normal(),((down_data[2,i] - sim_dat[j][2][2,i])/h[2]))
-                    *pdf(Normal(),((price_data[i] - sim_dat[j][3][i])/h[3]))
-                    )
+                if data_mode == 1 # Only prices 
+                    like+=(
+                        pdf(Normal(),((price_data[i] - sim_dat[j][3][i])/h[3]))
+                        )
+                elseif data_mode==2 # Only matches
+                    like+=(
+                        pdf(Normal(),((down_data[1,i] - sim_dat[j][2][1,i])/h[1]))
+                        *pdf(Normal(),((down_data[2,i] - sim_dat[j][2][2,i])/h[2]))
+                        )
             end
 
 
@@ -169,7 +181,12 @@ end
                 ll[i] = log(pdf(Normal(),30))
                 n_zeros += 1
             else
-                ll[i]=log(like/(n_sim*h[1]*h[2]*h[3]))
+                if data_mode ==1 # Only prices
+                    ll[i]=log(like/(n_sim*h[3]))  
+                elseif data_mode==2
+                    ll[i]=log(like/(n_sim*h[1]*h[2]))  
+                end
+
             end
     
     
@@ -221,15 +238,18 @@ end
 end
 
 for j = 9:9
-    for n_sim =50:50:50
-        for n_firms =  50:50:400
-            est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim, 9:10, 60 , 30) ,1:24)
-            estimation_result = Dict()
-            push!(estimation_result, "beta_hat" => est_pars)
-            bson("/Users/akp/github/NPSML-Estimator-Price-Data"*
-            "/Price Estimation April 2022/LogNormal Dist/MCRES/p9-10/"*
-            "est_$(n_firms)_sim_$(n_sim)_9-10", estimation_result)
+    for n_sim =25:50:25
+        for data_mode =1:2
+            for n_firms =  25:25:50
+                est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim, 9:10, 60*(n_firms/25) , 30*(n_firms/25), 1) ,1:24)
+                estimation_result = Dict()
+                push!(estimation_result, "beta_hat" => est_pars)
+                bson("/Users/akp/github/NPSML-Estimator-Price-Data"*
+                "/Price Estimation April 2022/LogNormal Dist/MCRES/limited_data/"*
+                "est_$(n_firms)_sim_$(n_sim)_dmod_$(data_mode)", estimation_result)
+            end
         end
+    
     end
 end
 
