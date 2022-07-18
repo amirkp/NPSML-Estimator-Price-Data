@@ -46,7 +46,7 @@ end
 
 
 
-@everywhere function replicate_byseed(n_rep, n_firms, n_sim, par_ind, globT, locT, data_mode)
+@everywhere function replicate_byseed(n_rep, n_firms, n_sim, par_ind, globT, locT, data_mode, h_scale)
 
 
     Σ_up = [0 .1;
@@ -122,6 +122,11 @@ end
         println("BAD BANDWIDTH")
     end
 
+    h[1] = h[1] * h_scale[1]
+    h[2] = h[2] * h_scale[2]
+    h[3] = h[3] * h_scale[3]
+
+
 
 
 
@@ -174,6 +179,12 @@ end
                         pdf(Normal(),((down_data[1,i] - sim_dat[j][2][1,i])/h[1]))
                         *pdf(Normal(),((down_data[2,i] - sim_dat[j][2][2,i])/h[2]))
                         )
+                elseif  data_mode==3 # Matches and Prices
+                    like+=(
+                        pdf(Normal(),((down_data[1,i] - sim_dat[j][2][1,i])/h[1]))
+                        *pdf(Normal(),((down_data[2,i] - sim_dat[j][2][2,i])/h[2]))
+                        *pdf(Normal(),((price_data[i] - sim_dat[j][3][i])/h[3]))
+                        )
                 end
             end
 
@@ -186,6 +197,8 @@ end
                     ll[i]=log(like/(n_sim*h[3]))  
                 elseif data_mode==2
                     ll[i]=log(like/(n_sim*h[1]*h[2]))  
+                elseif data_mode==3
+                    ll[i]=log(like/(n_sim*h[1]*h[2]*h[3]))  
                 end
 
             end
@@ -242,7 +255,7 @@ for j = 9:9
     for n_sim =25:50:25
         for data_mode =1:2
             for n_firms =  25:25:50
-                est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim, 9:10, 30*(n_firms/25) , 20*(n_firms/25), 1) ,1:24)
+                est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim, 9:10, 30*(n_firms/25) , 20*(n_firms/25), data_mode) ,1:24)
                 estimation_result = Dict()
                 push!(estimation_result, "beta_hat" => est_pars)
                 bson("/Users/akp/github/NPSML-Estimator-Price-Data"*
