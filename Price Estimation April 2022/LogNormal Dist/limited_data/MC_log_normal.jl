@@ -174,6 +174,7 @@ end
                         pdf(Normal(),((down_data[1,i] - sim_dat[j][2][1,i])/h[1]))
                         *pdf(Normal(),((down_data[2,i] - sim_dat[j][2][2,i])/h[2]))
                         )
+                end
             end
 
 
@@ -241,7 +242,7 @@ for j = 9:9
     for n_sim =25:50:25
         for data_mode =1:2
             for n_firms =  25:25:50
-                est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim, 9:10, 60*(n_firms/25) , 30*(n_firms/25), 1) ,1:24)
+                est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim, 9:10, 30*(n_firms/25) , 20*(n_firms/25), 1) ,1:24)
                 estimation_result = Dict()
                 push!(estimation_result, "beta_hat" => est_pars)
                 bson("/Users/akp/github/NPSML-Estimator-Price-Data"*
