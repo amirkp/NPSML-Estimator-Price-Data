@@ -3,13 +3,15 @@
 #### LOG NORMAL MC 
 ######## July 19 2022
 #### Consider 3 parameter with different data scenarios
+### Sign of beta33d is fixed at the true sign of the parameter in the DGP 
+
 
 ### Monte-Carlo -- NPSML estimator -- Normally Distributed
 ### Simulation using finite market approximation. 
 # package for parallel computation
 
-using Distributed
-addprocs()
+using Distributed, ClusterManagers
+pids = addprocs_slurm(parse(Int, ENV["SLURM_NTASKS"]))
 using BSON
 
 @everywhere begin
@@ -46,7 +48,7 @@ end
             bdown = [
                 vcat(b[5], b[6],0)';
                 vcat(b[7], 0, 0)';
-                vcat(0 ,0., b[9] )'
+                vcat(0 ,0., b[9])'
             ]
 
         return bup, bdown
@@ -122,7 +124,7 @@ end
         bdown = [
             vcat(b[5], b[6],0)';
             vcat(b[7], 0, 0)';
-            vcat(0 ,0., (b[9]) )'
+            vcat(0 ,0., -abs(b[9]) )'
          ]
     
         solve_draw =  x->sim_data_JV_up_obs(bup, bdown , Σ_up, Σ_down, n_firms, 360+x, true, up_data[1:2,:],b[10], sel_mode)
@@ -184,6 +186,7 @@ end
         return -out
     end
 
+
     # # # Estimated parameters: 
 
     bbo_search_range = (-20,20)
@@ -202,6 +205,7 @@ end
     cbf = x-> println("parameter: ", round.(best_candidate(x), digits=3), " n_rep: ", n_rep, " fitness: ", best_fitness(x) )
     nopts=1
     opt_mat =zeros(nopts,length(par_ind)+1)
+    
 
     for i = 1:nopts
         bbsolution1 = bboptimize(fun; SearchRange = bbo_search_range, 
@@ -222,12 +226,12 @@ end
 
 for match_bw = 1.:2:1.
     for n_sim =50:25:50
-        for n_firms in [50, 100, 200]
+        for n_firms in [100, 200, 400]
             for data_mode=1:1:3
-                    est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim,[ match_bw * 1., match_bw * 1., 1.], [1, 9, 10], "median", min(100 * (n_firms/50), 600) , 100, data_mode), 1:n_reps)
+                    est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim,[ match_bw * 1., match_bw * 1., 1.], [1, 9, 10], "median", max(300, 100*(n_firms/100)^3) , n_firms, data_mode), 1:n_reps)
                     estimation_result = Dict()
                     push!(estimation_result, "beta_hat" => est_pars)
-                    bson("/Users/akp/github/NPSML-Estimator-Price-Data/Price Estimation April 2022/LogNormal Dist/limited_data_3p/est_$(n_firms)_sim_$(n_sim)_dmode_$(data_mode)_bw_$(match_bw).bson", estimation_result)
+                    bson("/home/ak68/limited_data_3p_sign/est_$(n_firms)_sim_$(n_sim)_dmode_$(data_mode)_bw_$(match_bw).bson", estimation_result)
             end
 
         end
