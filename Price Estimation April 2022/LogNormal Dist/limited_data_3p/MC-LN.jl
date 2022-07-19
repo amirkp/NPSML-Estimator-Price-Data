@@ -8,8 +8,8 @@
 ### Simulation using finite market approximation. 
 # package for parallel computation
 
-using Distributed, ClusterManagers
-pids = addprocs_slurm(parse(Int, ENV["SLURM_NTASKS"]))
+using Distributed
+addprocs()
 using BSON
 
 @everywhere begin
@@ -184,7 +184,6 @@ end
         return -out
     end
 
-    /Users/amir/github/NPSML-Estimator-Price-Data/Price Estimation April 2022/LogNormal Dist/limited_data
     # # # Estimated parameters: 
 
     bbo_search_range = (-20,20)
@@ -228,7 +227,7 @@ for match_bw = 1.:2:1.
                     est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim,[ match_bw * 1., match_bw * 1., 1.], [1, 9, 10], "median", max(100 * (n_firms/50), 600) , 100, data_mode), 1:n_reps)
                     estimation_result = Dict()
                     push!(estimation_result, "beta_hat" => est_pars)
-                    bson("/home/ak68/limited_data_3p/est_$(n_firms)_sim_$(n_sim)_dmode_$(data_mode)_bw_$(match_bw).bson", estimation_result)
+                    bson("/Users/akp/github/NPSML-Estimator-Price-Data/Price Estimation April 2022/LogNormal Dist/limited_data_3p/est_$(n_firms)_sim_$(n_sim)_dmode_$(data_mode)_bw_$(match_bw).bson", estimation_result)
             end
 
         end
