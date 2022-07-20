@@ -232,8 +232,8 @@ for match_bw = 1.:2:1.
                     est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim,[ match_bw * 1., match_bw * 1., 1.], 1:10, "median", 1000*(n_firms/100)^2, 600, data_mode), 1:n_reps)
                     estimation_result = Dict()
                     push!(estimation_result, "beta_hat" => est_pars)
-                    bson("/home/ak68/10p-tst/est_$(n_firms)_sim_$(n_sim)_dmode_$(data_mode)_bw_$(match_bw).bson", estimation_result)
-                    # bson("/Users/amir/github/NPSML-Estimator-Price-Data/Price Estimation April 2022/NOTS/LogNormal/10p/est_$(n_firms)_sim_$(n_sim)_dmode_$(data_mode)_bw_$(match_bw).bson", estimation_result)
+                    # bson("/home/ak68/10p-tst/est_$(n_firms)_sim_$(n_sim)_dmode_$(data_mode)_bw_$(match_bw).bson", estimation_result)
+                    bson("/Users/akp/github/NPSML-Estimator-Price-Data/Price Estimation April 2022/LogNormal Dist/10p-tst/est_$(n_firms)_sim_$(n_sim)_dmode_$(data_mode)_bw_$(match_bw).bson", estimation_result)
             end
 
         end
