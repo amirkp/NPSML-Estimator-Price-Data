@@ -191,7 +191,7 @@ end
 
     bbo_search_range = [(-10.0, 10.0), (-10.0, 10.0),(-10.0, 10.0),(-10.0, 10.0),(-10.0, 10.0),(-10.0, 10.0),(-10.0, 10.0),(-10.0, 10.0),(-10.0, 0),(-10.0, 10.0)]
 
-    bbo_population_size =150
+    bbo_population_size =50
     bbo_max_time=globT
     
     bbo_ndim = length(par_ind)
@@ -227,9 +227,9 @@ end
 
 for match_bw = 1.:2:1.
     for n_sim =50:25:50
-        for n_firms in [100, 200]
+        for n_firms in [50]
             for data_mode=3:3:3
-                    est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim,[ match_bw * 1., match_bw * 1., 1.], 1:10, "median", 1000*(n_firms/100)^2, 600, data_mode), 1:n_reps)
+                    est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim,[ match_bw * 1., match_bw * 1., 1.], 1:10, "median", 1000, 60, data_mode), 1:n_reps)
                     estimation_result = Dict()
                     push!(estimation_result, "beta_hat" => est_pars)
                     # bson("/home/ak68/10p-tst/est_$(n_firms)_sim_$(n_sim)_dmode_$(data_mode)_bw_$(match_bw).bson", estimation_result)

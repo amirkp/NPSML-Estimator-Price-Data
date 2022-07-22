@@ -31,8 +31,8 @@ addprocs()    # Cores  (This is for #444 Mac Pro)
     using Plots
     using Assignment
     using BenchmarkTools
-    include("JV_DGP-LogNormal.jl")
-    # include("JV_DGP-mvLogNormal.jl")
+    # include("JV_DGP-LogNormal.jl")
+    include("JV_DGP-mvLogNormal.jl")
     # include("LP_DGP.jl")
 end
 
@@ -48,15 +48,29 @@ end
 
 @everywhere function replicate_byseed(n_rep, n_firms, n_sim, par_ind, globT, locT, data_mode, h_scale)
 
+    xcor = 0.3
+    x1var = .1
+    x2var = .2
+    xcov  = sqrt(x1var)*sqrt(x2var)* xcor
 
-    Σ_up = [0 .1;
-            0 .2;
-            0 .1]
+    Σ_up = [x1var xcov 0;
+            xcov x2var 0;
+            0     0    .1]
+    # Σ_up = [0 .1;
+    #         0 .2;
+    #         0 .1]
 
+    ycor =-0.5
+    y1var = .3
+    y2var = .4
+    ycov  = sqrt(y1var)*sqrt(y2var)* ycor
 
-    Σ_down =  [0 .3;
-               0 .4;
-               0 .1]
+    Σ_down = [y1var ycov 0;
+            ycov y2var 0;
+            0     0    .1]
+    # Σ_down =  [0 .3;
+    #            0 .4;
+    #            0 .1]
 
     function par_gen(b)
         bup = [
@@ -260,8 +274,8 @@ for n_sim =50:50:50
             estimation_result = Dict()
             push!(estimation_result, "beta_hat" => est_pars)
             bson("/Users/akp/github/NPSML-Estimator-Price-Data"*
-            "/Price Estimation April 2022/LogNormal Dist/MCRES/limited_data_alt1/"*
-            "est_$(n_firms)_sim_$(n_sim)_dmod_$(data_mode)_01_01_1", estimation_result)
+            "/Price Estimation April 2022/LogNormal Dist/MCRES/limited_data_alt2/"*
+            "est_$(n_firms)_sim_$(n_sim)_dmod_$(data_mode)", estimation_result)
         end
     end
 
