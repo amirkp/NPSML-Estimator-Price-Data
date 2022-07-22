@@ -124,7 +124,7 @@ end
         bdown = [
             vcat(b[5], b[6],0)';
             vcat(b[7], 0, 0)';
-            vcat(0 ,0., -abs(b[9]) )'
+            vcat(0 ,0., b[9] )'
          ]
     
         solve_draw =  x->sim_data_JV_up_obs(bup, bdown , Σ_up, Σ_down, n_firms, 360+x, true, up_data[1:2,:],b[10], sel_mode)
@@ -173,7 +173,7 @@ end
         end
 
         sort!(ll)
-        drop_thres = max(2, Int(floor(0.05*n_firms)))
+        drop_thres = max(2, Int(floor(0.03*n_firms)))
         out = mean(ll[drop_thres:end])
 
         if mod(time(),10)<.01
@@ -191,9 +191,9 @@ end
 
     bbo_search_range = [(-10.0, 10.0), (-10.0, 10.0),(-10.0, 10.0),(-10.0, 10.0),(-10.0, 10.0),(-10.0, 10.0),(-10.0, 10.0),(-10.0, 10.0),(-10.0, 0),(-10.0, 10.0)]
 
-    bbo_population_size =150
+    bbo_population_size =50
     bbo_max_time=globT
-    
+    bbo_max_step = 30000
     bbo_ndim = length(par_ind)
     bbo_feval = 100000
     
@@ -211,9 +211,9 @@ end
     for i = 1:nopts
         bbsolution1 = bboptimize(fun; SearchRange = bbo_search_range, 
             NumDimensions =bbo_ndim, PopulationSize = bbo_population_size, 
-            Method = :adaptive_de_rand_1_bin_radiuslimited, MaxFuncEvals = bbo_feval,
+            Method = :adaptive_de_rand_1_bin_radiuslimited, 
             TraceInterval=30.0, TraceMode=:compact, MaxTime = bbo_max_time,
-            CallbackInterval=13,
+            CallbackInterval=100,  MaxSteps=bbo_max_step,
             CallbackFunction= cbf) 
     
         @show opt2 = Optim.optimize(fun, best_candidate(bbsolution1), time_limit=locT)
@@ -225,19 +225,19 @@ end
 
 # Parameter estimates 
 
-for match_bw = 1.:2:1.
-    for n_sim =50:25:50
-        for n_firms in [100, 200]
-            for data_mode=3:3:3
-                    est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim,[ match_bw * 1., match_bw * 1., 1.], 1:10, "median", 1000*(n_firms/100)^2, 600, data_mode), 1:n_reps)
-                    estimation_result = Dict()
-                    push!(estimation_result, "beta_hat" => est_pars)
-                    bson("/home/ak68/10p-tst/est_$(n_firms)_sim_$(n_sim)_dmode_$(data_mode)_bw_$(match_bw).bson", estimation_result)
-                    # bson("/Users/amir/github/NPSML-Estimator-Price-Data/Price Estimation April 2022/NOTS/LogNormal/10p/est_$(n_firms)_sim_$(n_sim)_dmode_$(data_mode)_bw_$(match_bw).bson", estimation_result)
-            end
 
+for n_sim =50:25:50
+    for n_firms in [50, 100]
+        for data_mode=3:3:3
+                est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim,[ 1.,  1., 1.], 1:10, "median", 1000*(n_firms/50)^2, 300, data_mode), 1:n_reps)
+                estimation_result = Dict()
+                push!(estimation_result, "beta_hat" => est_pars)
+                bson("/home/ak68/10p/est_$(n_firms)_sim_$(n_sim)_dmode_$(data_mode).bson", estimation_result)
+                
         end
+
     end
 end
+
 
 
