@@ -15,7 +15,7 @@
 ## Amir Kazempour
 # Trying to experiment with other parameterization
 
-###high variance for one of eta
+### only one parameter
 using Distributed
 using BSON
 # using FLoops
@@ -271,168 +271,15 @@ end
 for n_sim =50:50:50
     for n_firms =  25:25:50
         for data_mode =1:3
-            est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim, 9:10, 15*(n_firms/50) ,
+            est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim, [9], 15*(n_firms/50) ,
                      10, data_mode,[1., 1., 1.]) ,1:96)
             estimation_result = Dict()
             push!(estimation_result, "beta_hat" => est_pars)
             bson("/Users/akp/github/NPSML-Estimator-Price-Data"*
-            "/Price Estimation April 2022/LogNormal Dist/MCRES/limited_data_alt4/"*
+            "/Price Estimation April 2022/LogNormal Dist/MCRES/limited_data_alt5/"*
             "est_$(n_firms)_sim_$(n_sim)_dmod_$(data_mode)", estimation_result)
         end
     end
-
 end
 
 
-
-
-
-res = BSON.load("/Users/akp/github/NPSML-Estimator-Price-Data"*
-    "/Price Estimation April 2022/LogNormal Dist/restricted_2par9-10/est_200_sim_50_par_9_2")
-
-
-res = BSON.load("/Users/akp/github/NPSML-Estimator-Price-Data/Price Estimation April 2022/LogNormal Dist/MCRES/p9-10/est_50_sim_50_9-10_2opt")    
-pars = reduce(vcat, res["beta_hat"])
-display(scatter(pars[:,1], pars[:,2],
-    legends=false, markersize = 3, color=:yellow, ylims=(-1,10)))
-
-
-
-
-
-
-res_1p = zeros(2, 10)
-for j = 1:10
-    res = BSON.load("/Users/akp/github/"*
-                "NPSML-Estimator-Price-Data/Price Estimation April 2022/LogNormal Dist"*
-                "/restricted_2par9-10/est_100_sim_50_par_9");
-    est = reduce(vcat,res["beta_hat"]')
-    bias =est .- true_pars[j]
-    res_1p[1,j] = mean(bias)
-    res_1p[2,j] = sqrt(mean(bias.^2))
-end
-
-res = BSON.load("/Users/akp/github/NPSML-Estimator-Price-Data/"*
-    "Price Estimation April 2022/LogNormal Dist/restricted_9par/est_200_sim_25_1-4")
-# res = BSON.load("/Users/akp/out/03/est_200_sim_50.bson")
-
-
-# res["beta_hat"]
-# pars = copy(res["beta_hat"])
-
-res = BSON.load("/Users/akp/github/NPSML-Estimator-Price-Data/"*
-    "Price Estimation April 2022/LogNormal Dist/restricted_9par/est_50_sim_25_1-4")
-pars = reduce(vcat,res["beta_hat"])
-scatter(pars[:,1], pars[:,2], markersize = 4)
-
-res = BSON.load("/Users/akp/github/NPSML-Estimator-Price-Data/"*
-    "Price Estimation April 2022/LogNormal Dist/restricted_9par/est_50_sim_50_1-4")
-pars = reduce(vcat,res["beta_hat"])
-scatter!(pars[:,1], pars[:,2], markersize = 8)
-
-res = BSON.load("/Users/akp/github/NPSML-Estimator-Price-Data/"*
-    "Price Estimation April 2022/LogNormal Dist/restricted_9par/est_50_sim_100_1-4")
-pars = reduce(vcat,res["beta_hat"])
-scatter!(pars[:,1], pars[:,2], markersize = 7)
-
-
-
-
-res = BSON.load("/Users/akp/github/NPSML-Estimator-Price-Data/"*
-    "Price Estimation April 2022/LogNormal Dist/restricted_9par/est_100_sim_25_1-4")
-pars = reduce(vcat,res["beta_hat"])
-scatter!(pars[:,1], pars[:,2])
-
-res = BSON.load("/Users/akp/github/NPSML-Estimator-Price-Data/"*
-    "Price Estimation April 2022/LogNormal Dist/restricted_9par/est_200_sim_25_1-4")
-pars = reduce(vcat,res["beta_hat"])
-scatter!(pars[:,1], pars[:,2], markersize =3)
-
-
-res = BSON.load("/Users/akp/github/NPSML-Estimator-Price-Data/"*
-    "Price Estimation April 2022/LogNormal Dist/restricted_9par/est_200_sim_50_1-4")
-pars = reduce(vcat,res["beta_hat"])
-scatter!(pars[:,1], pars[:,2], markersize=2)
-
-
-
-
-
-
-
-
-i =
-j =10
-gr()
-for i = 1:10
-    for j = 11:11
-
-        res = BSON.load("/Users/akp/out/median/est_100_sim_50_mean.bson")
-        pars = res["beta_hat"]
-        fit = res["fitness"]
-        # display(scatter(pars[:,i], pars[:,j], markersize = 3, color=:red, title="$(i) - $(j)"))
-        display(scatter(pars[:,i], fit, markersize = 3, color=:red, title="$(i) - $(j)"))
-
-        # res = BSON.load("/Users/akp/out/mean/est_100_sim_50_mean.bson")
-        # pars = res["beta_hat"]
-        # display(scatter!(pars[:,i], pars[:,j], markersize = 3, color="orange"))
-
-        # res = BSON.load("/Users/akp/out/min/est_100_sim_50_mean.bson")
-        # pars = res["beta_hat"]
-        # display(scatter!(pars[:,i], pars[:,j], markersize = 3, color =:yellow))
-
-        sleep(2)
-    end
-end
-
-
-
-res = BSON.load("/Users/akp/out/02/est_100_sim_25.bson")
-# res = BSON.load("/Users/akp/out/03/est_200_sim_25.bson")
-pars = res["beta_hat"]
-display(scatter(pars[:,i], pars[:,j], markersize = 5, color=:red, title="$(i) - $(j)"))
-
-
-# res = BSON.load("/Users/akp/out/02/est_100_sim_50.bson")
-res = BSON.load("/Users/akp/github/NPSML-Estimator-Price-Data/Price Estimation April 2022/LogNormal Dist/restricted_2par9-10/est_25_sim_25_9-10")
-pars = reduce(vcat, res["beta_hat"])
-display(scatter(pars[:,1], pars[:,3],
-    legends=false, markersize = 3, color=:yellow, title="$(i) - $(j)"))
-
-
-
-    for i = 1:10
-    for j = 1:10
-
-        res = BSON.load("/Users/akp/out/median/est_100_sim_50_mean.bson")
-        pars = res["beta_hat"]
-        display(scatter(pars[:,i], pars[:,j], markersize = 3, color=:red, title="$(i) - $(j)"))
-
-    end
-end
-
-
-
-
-
-
-
-
-
-@benchmark up_data, down_data, price_data =
-    sim_data_JV_LogNormal(bup, bdown, Σ_up, Σ_down, 300
-        , 38+n_rep, false, 0, 0, true_pars[10])
-
-
-
-loglike(res["beta_hat"][1])
-
-
-loglike(true_pars)
-
-true_pars'
-
-scatter(up_data[2,:], down_data[2,:], markersize=2)
-scatter(up_data[1,:], down_data[2,:])
-scatter(up_data[1,:], price_data)
-scatter(up_data[1,:], up_data[2,:])
