@@ -55,7 +55,7 @@ end
 
     Σ_up = [x1var xcov 0;
             xcov x2var 0;
-            0     0    .1]
+            0     0    .4]
     # Σ_up = [0 .1;
     #         0 .2;
     #         0 .1]
@@ -269,10 +269,10 @@ end
 
 
 for n_sim =50:50:50
-    for n_firms =  50:50:100
+    for n_firms =  10:15:25
         for data_mode =1:3
-            est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim, 9:10, 60*(n_firms/50) ,
-                     40, data_mode,[1., 1., 1.]) ,1:96)
+            est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim, 9:10, 15*(n_firms/50) ,
+                     10, data_mode,[1., 1., 1.]) ,1:96)
             estimation_result = Dict()
             push!(estimation_result, "beta_hat" => est_pars)
             bson("/Users/akp/github/NPSML-Estimator-Price-Data"*
