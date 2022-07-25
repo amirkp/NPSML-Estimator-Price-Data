@@ -269,15 +269,15 @@ end
 
 
 for n_sim =50:50:50
-    for n_firms =  25:25:50
+    for n_firms =  100:100:300
         for data_mode =1:3
-            est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim, [9], 15*(n_firms/50) ,
-                     10, data_mode,[1., 1., 1.]) ,1:96)
+            est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim, [9], 150*(n_firms/400) ,
+                     5, data_mode,[1., 1., 1.]) ,1:96)
             estimation_result = Dict()
             push!(estimation_result, "beta_hat" => est_pars)
             bson("/Users/akp/github/NPSML-Estimator-Price-Data"*
             "/Price Estimation April 2022/LogNormal Dist/MCRES/limited_data_alt5/"*
-            "est_$(n_firms)_sim_$(n_sim)_dmod_$(data_mode)", estimation_result)
+            "est_$(n_firms)_sim_$(n_sim)_dmod_$(data_mode)_10", estimation_result)
         end
     end
 end
