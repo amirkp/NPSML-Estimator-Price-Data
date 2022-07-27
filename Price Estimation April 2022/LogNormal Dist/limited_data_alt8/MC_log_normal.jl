@@ -17,6 +17,8 @@
 
 ### b33d and eeq selection but other parmeterization 
 #### 2 dimension
+
+### MAny optimizations
 using Distributed
 using BSON
 # using FLoops
@@ -236,7 +238,7 @@ end
     # # # Estimated parameters: 
 
     bbo_search_range = [(-10, 0), (-10,10)]
-    bbo_population_size =50
+    bbo_population_size =100
     bbo_max_time=globT
     bbo_ndim = length(par_ind)
     bbo_feval = 100000
@@ -248,7 +250,7 @@ end
     end
 
     cbf = x-> println("parameter: ", round.(best_candidate(x), digits=3), " n_rep: ", n_rep, " fitness: ", best_fitness(x) )
-    nopts=1
+    nopts=10
     opt_mat =zeros(nopts,length(par_ind)+1)
 
     for i = 1:nopts
