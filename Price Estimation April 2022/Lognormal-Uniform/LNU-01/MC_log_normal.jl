@@ -274,9 +274,8 @@ for n_sim =50:300:50
                      10, data_mode,[1., 1., 10]) ,1:24*2)
             estimation_result = Dict()
             push!(estimation_result, "beta_hat" => est_pars)
-            bson("/Users/akp/github/NPSML-Estimator-Price-Data"*
-            "/Price Estimation April 2022/LogNormal Dist/MCRES/limited_data_alt12/"*
-            "est_$(n_firms)_sim_$(n_sim)_dmod_$(data_mode)_pr10", estimation_result)
+            bson("/Users/akp/github/NPSML-Estimator-Price-Data/Price Estimation April 2022/Lognormal-Uniform/LNU-01/MCRES/LNU-01/"*
+            "est_$(n_firms)_sim_$(n_sim)_dmod_$(data_mode)", estimation_result)
         end
     end
 end
