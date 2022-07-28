@@ -266,15 +266,14 @@ end
     return opt_mat
 end
 
-
 for n_sim =50:300:50
-    for n_firms =  50:50:50
+    for n_firms =  100:50:100
         for data_mode =3:3
-            est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim, [9,10], 60 ,
-                     10, data_mode,[1., 1., 10]) ,1:24*2)
+            est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim, [9,10], 100 ,
+                     10, data_mode,[1., 1., 1]) ,1:24*2)
             estimation_result = Dict()
             push!(estimation_result, "beta_hat" => est_pars)
-            bson("/Users/akp/github/NPSML-Estimator-Price-Data/Price Estimation April 2022/Lognormal-Uniform/LNU-01/MCRES/LNU-01/"*
+            bson("/Users/akp/github/NPSML-Estimator-Price-Data/Price Estimation April 2022/Lognormal-Uniform/MCRES/LNU-01/"*
             "est_$(n_firms)_sim_$(n_sim)_dmod_$(data_mode)", estimation_result)
         end
     end
