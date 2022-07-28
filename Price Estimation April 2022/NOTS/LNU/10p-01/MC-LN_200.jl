@@ -13,22 +13,39 @@ using BSON
     using BlackBoxOptim
     using Assignment
     using Optim
-    include("JV_DGP-LogNormal.jl")
+    include("JV_DGP-mvLogNormal.jl")
 end
 
 @everywhere begin 
     n_reps =nworkers() # Number of replications (fake datasets)
-    true_pars = [-2.5, 1.5, -1.5, -.5, 3.5, 2.5, 1.5, 3, -3, 3.]
+    true_pars =  [-1.5, 3.5, -.5, -2.5, .5, -2.5, 1.5, 4, -2, 3]
 
-    Σ_up = [0 .1;
-            0 .2;
-            0 .1]
+    xcor = 0.3
+    x1var = .1
+    x2var = .2
+    xcov  = sqrt(x1var)*sqrt(x2var)* xcor
+
+    Σ_up = [x1var xcov 0;
+            xcov x2var 0;
+            0     0    .1]
+    # Σ_up = [0 .1;
+    #         0 .2;
+    #         0 .1]
+
+    ycor =-0.5
+    y1var = .3
+    y2var = .4
+    ycov  = sqrt(y1var)*sqrt(y2var)* ycor
+
+    Σ_down = [y1var ycov 0;
+            ycov y2var 0;
+            0     0    .1]
 
 
-    Σ_down =  [0 .3;
-               0 .4;
-               0 .1]
-    
+    # Σ_down =  [0 .3;
+    #            0 .4;
+    #            0 .1]
+ 
     function par_gen(b)
             bup = [
                 vcat(b[1:2],b[8])';
@@ -60,7 +77,7 @@ end
     DGPsize = 3000
     up_data, down_data, price_data =
     sim_data_JV_LogNormal(bup, bdown, Σ_up, Σ_down, DGPsize
-        , 38+n_rep, false, 0, 0, true_pars[10], sel_mode)
+        , 38+n_rep, false, 0, 0, true_pars[10])
     
     ind_sample = sample(1:DGPsize, n_firms, replace= false);
 
@@ -119,7 +136,7 @@ end
             vcat(0 ,0., (b[9]) )'
          ]
     
-        solve_draw =  x->sim_data_JV_up_obs(bup, bdown , Σ_up, Σ_down, n_firms, 360+x, true, up_data[1:2,:],b[10], sel_mode)
+        solve_draw =  x->sim_data_JV_up_obs(bup, bdown , Σ_up, Σ_down, n_firms, 360+x, true, up_data[1:2,:],b[10])
     
         sim_dat = map(solve_draw, 1:n_sim)
         
@@ -181,8 +198,8 @@ end
 
     # # # Estimated parameters: 
 
-    bbo_search_range = (-20,20)
-    bbo_population_size =50
+    bbo_search_range = [(-10,10), (-10,10),(-10,10),(-10,10),(-10,10),(-10,10),(-10,10),(0,10), (-10, 0), (-10,10)]
+    bbo_population_size =100
     bbo_max_time=globT
 
     bbo_ndim = length(par_ind)
@@ -195,7 +212,7 @@ end
     end
 
     cbf = x-> println("parameter: ", round.(best_candidate(x), digits=3), " n_rep: ", n_rep, " fitness: ", best_fitness(x) )
-    nopts=1
+    nopts=2
     opt_mat =zeros(nopts,length(par_ind)+1)
 
     for i = 1:nopts
@@ -205,9 +222,11 @@ end
             TraceInterval=30.0, TraceMode=:compact, MaxTime = bbo_max_time,
             CallbackInterval=13,
             CallbackFunction= cbf) 
+        @show opt_mat[i,:] = vcat(best_candidate(bbsolution1), best_fitness(bbsolution1))'
+
     
-        @show opt2 = Optim.optimize(fun, best_candidate(bbsolution1), time_limit=locT)
-        @show opt_mat[i,:] = vcat(Optim.minimizer(opt2), Optim.minimum(opt2))'
+        # @show opt2 = Optim.optimize(fun, best_candidate(bbsolution1), time_limit=locT)
+        # @show opt_mat[i,:] = vcat(Optim.minimizer(opt2), Optim.minimum(opt2))'
     end
 
     return opt_mat
@@ -215,16 +234,15 @@ end
 
 # Parameter estimates 
 
-for match_bw = 0.5:0.5:1.5
-    for n_sim =50:25:50
-        for n_firms = 100:200:500
-            for data_mode=1:2:3
-                    est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim,[ match_bw * 1., match_bw * 1., 1.], 9:10, "median", 60*(n_firms/100)^3 , 10*(n_firms/100)^2, data_mode), 1:n_reps)
-                    estimation_result = Dict()
-                    push!(estimation_result, "beta_hat" => est_pars)
-                    bson("/home/ak68/limited_data/est_$(n_firms)_sim_$(n_sim)_dmode_$(data_mode)_bw_$(match_bw).bson", estimation_result)
-            end
 
+for n_sim =50:25:50
+    for n_firms = 200:200
+        for data_mode=3:2:3
+                est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim,[  1.,  1., 1.], 1:10, "median", 3.5*3600 ,10, data_mode), 1:n_reps)
+                estimation_result = Dict()
+                push!(estimation_result, "beta_hat" => est_pars)
+                bson("/home/ak68/LNU/10p-01/est_$(n_firms)_sim_$(n_sim)_dmode_$(data_mode).bson", estimation_result)
         end
+
     end
 end

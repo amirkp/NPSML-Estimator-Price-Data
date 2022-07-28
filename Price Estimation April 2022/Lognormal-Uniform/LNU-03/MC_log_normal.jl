@@ -15,7 +15,7 @@
 ## Amir Kazempour
 # Trying to experiment with other parameterization
 
-##### checking 3 parameters
+##### All 10 parameters
 using Distributed
 using BSON
 # using FLoops
@@ -234,7 +234,7 @@ end
 
     # # # Estimated parameters: 
 
-    bbo_search_range = [(0,10), (-10, 0), (-10,10)]
+    bbo_search_range = [(-10,10), (-10,10),(-10,10),(-10,10),(-10,10),(-10,10),(-10,10),(0,10), (-10, 0), (-10,10)]
     bbo_population_size =100
     bbo_max_time=globT
     bbo_ndim = length(par_ind)
@@ -266,13 +266,13 @@ end
 end
 
 for n_sim =50:300:50
-    for n_firms =  100:50:100
+    for n_firms in [50, 100, 200, 500]
         for data_mode =3:3
-            est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim, [8,9,10], 120*(n_firms/50) ,
-                     10, data_mode,[1., 1., 1]) ,1:24*2)
+            est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim, 1:10, 300*(n_firms/50)^2 ,
+                     10, data_mode,[1., 1., 1]) ,1:24)
             estimation_result = Dict()
             push!(estimation_result, "beta_hat" => est_pars)
-            bson("/Users/akp/github/NPSML-Estimator-Price-Data/Price Estimation April 2022/Lognormal-Uniform/MCRES/LNU-02/"*
+            bson("/Users/akp/github/NPSML-Estimator-Price-Data/Price Estimation April 2022/Lognormal-Uniform/MCRES/LNU-03/"*
             "est_$(n_firms)_sim_$(n_sim)_dmod_$(data_mode)", estimation_result)
         end
     end

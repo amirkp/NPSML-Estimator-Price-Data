@@ -1,50 +1,24 @@
 ### Monte-Carlo -- NPSML estimator -- Normally Distributed
 ### Simulation using finite market approximation. 
 # package for parallel computation
-# /Users/akp/github/NPSML-Estimator-Price-Data/Price Estimation April 2022/LogNormal Dist/restricted_9par/MC_log_normal.jl
-######################################
-######################################
-######################################
-######################################
-## estimation with price or matching only 
-######################################
-######################################
-######################################
-## Data created July 22 2022
-## Copied from limited data folder
-## Amir Kazempour
-# Trying to experiment with other parameterization
 
-##### checking 3 parameters
-using Distributed
+using Distributed, ClusterManagers
+pids = addprocs_slurm(parse(Int, ENV["SLURM_NTASKS"]))
 using BSON
-# using FLoops
-addprocs()    # Cores  (This is for #444 Mac Pro)
-
 
 @everywhere begin
-    using Optim 
     using LinearAlgebra
     using Random
     using Distributions
     using BlackBoxOptim
-    using Plots
     using Assignment
-    using BenchmarkTools
-    # include("JV_DGP-LogNormal.jl")
+    using Optim
     include("JV_DGP-mvLogNormal.jl")
-    # include("LP_DGP.jl")
 end
 
 @everywhere begin 
-    n_reps =24 # Number of replications (fake datasets)
+    n_reps =nworkers() # Number of replications (fake datasets)
     true_pars =  [-1.5, 3.5, -.5, -2.5, .5, -2.5, 1.5, 4, -2, 3]
-end
-
-
-
-
-@everywhere function replicate_byseed(n_rep, n_firms, n_sim, par_ind, globT, locT, data_mode, h_scale)
 
     xcor = 0.3
     x1var = .1
@@ -71,36 +45,45 @@ end
     # Σ_down =  [0 .3;
     #            0 .4;
     #            0 .1]
-
+ 
     function par_gen(b)
-        bup = [
-            vcat(b[1:2],b[8])';
-            vcat(b[3:4], 0.)';
-            vcat(0 , 0, 0)'
-        ]
+            bup = [
+                vcat(b[1:2],b[8])';
+                vcat(b[3:4], 0.)';
+                vcat(0 , 0, 0)'
+            ]
 
 
-        bdown = [
-            vcat(b[5], b[6],0)';
-            vcat(b[7], 0, 0)';
-            vcat(0 ,0., b[9] )'
-        ]
+            bdown = [
+                vcat(b[5], b[6],0)';
+                vcat(b[7], 0, 0)';
+                vcat(0 ,0., b[9] )'
+            ]
 
         return bup, bdown
     end
 
-    bup, bdown = par_gen(true_pars)
 
-    DGPsize = 1000
+    bup, bdown = par_gen(true_pars)
+               
+end
+
+@everywhere function replicate_byseed(n_rep, n_firms, n_sim, h_scale,  par_ind, sel_mode, globT, locT, data_mode)
+
+ 
+
+    #[β11u, β12u, β21u, β11u, β11d, β12d, β21u, β13u, β33d]
+
+    DGPsize = 3000
     up_data, down_data, price_data =
-        sim_data_JV_LogNormal(bup, bdown, Σ_up, Σ_down, DGPsize
-            , 38+n_rep, false, 0, 0, true_pars[10])
-        
+    sim_data_JV_LogNormal(bup, bdown, Σ_up, Σ_down, DGPsize
+        , 38+n_rep, false, 0, 0, true_pars[10])
+    
     ind_sample = sample(1:DGPsize, n_firms, replace= false);
+
     up_data =up_data[:, ind_sample];
     down_data= down_data[:, ind_sample];
     price_data= price_data[ ind_sample];
-
 
 
     function bcv2_fun(h, down_data, price_data)
@@ -121,43 +104,26 @@ end
         # println("band: ",h," val: ", val)
         return val
     end
-
     # # only use a sample of size of the nsims not the total observed sample 
     # inds = rand(1:n_firms, n_sim)
-    inds = 1:n_firms
+    inds = 1:n_firms;
     # # Optimize over choice of h
-    res_bcv = Optim.optimize(x->bcv2_fun(x,down_data[1:2,inds],price_data[inds]), [0.01,.02,.2])
+    res_bcv = Optim.optimize(x->bcv2_fun(x,down_data[1:2,inds],price_data[inds]), [0.1,.1,.1]);
 
-
+    
     @show h = abs.(Optim.minimizer(res_bcv))
-    # return h 
+    
     if sum(h .> 10) >0 
         h=[0.04, 0.06, 0.2]
         println("BAD BANDWIDTH")
-    end
 
+    end
     h[1] = h[1] * h_scale[1]
     h[2] = h[2] * h_scale[2]
     h[3] = h[3] * h_scale[3]
-
-
-
-
-
-  
-    function trim(x,h, delta)
-        if abs(x)>2*h^delta
-            return 1 
-        elseif abs(x)<h^delta
-            return 0 
-        else
-            return ((4*(x-(h^delta))^3)/(h^(3*delta))) - ((3*(x-h^delta)^4)/(h^(4*delta)))
-        end
-    end    
+    
     
     function loglike(b)
-        
-    
         bup = [
             vcat(b[1:2], (b[8]))';
             vcat(b[3:4], 0.)';
@@ -170,17 +136,13 @@ end
             vcat(0 ,0., (b[9]) )'
          ]
     
-
-    
         solve_draw =  x->sim_data_JV_up_obs(bup, bdown , Σ_up, Σ_down, n_firms, 360+x, true, up_data[1:2,:],b[10])
     
         sim_dat = map(solve_draw, 1:n_sim)
-    
-
         
-
         ll=zeros(n_firms)
         n_zeros = 0
+        
         for i =1:n_firms
             like =0.
             for j =1:n_sim
@@ -201,9 +163,9 @@ end
                         )
                 end
             end
-
-
+            # println("like is: ", like, " log of which is: ", log(like/(n_sim*h[1]*h[2]*h[3])))
             if like == 0
+            #     # println("Like is zero!!!")
                 ll[i] = log(pdf(Normal(),30))
                 n_zeros += 1
             else
@@ -214,29 +176,32 @@ end
                 elseif data_mode==3
                     ll[i]=log(like/(n_sim*h[1]*h[2]*h[3]))  
                 end
-
+                # ll+=like
             end
-    
     
         end
 
         sort!(ll)
-        out = mean(ll[3:end])
-        
-        if mod(time(),10)<0.1
-            println("parameter: ", round.(b, digits=3), " function value: ", -out, " Number of zeros: ", n_zeros)
+        drop_thres = max(2, Int(floor(0.05*n_firms)))
+        out = mean(ll[drop_thres:end])
+
+        if mod(time(),10)<.01
+            println("I'm worker number $(myid()) on thread $(Threads.threadid()), and I reside on machine $(gethostname()).")
+
+            println(" parameter: ", round.(b, digits=4), " function value: ", -ll/n_firms, " Number of zeros: ", n_zeros)
         end
+
         Random.seed!()
         return -out
     end
 
 
-
     # # # Estimated parameters: 
 
-    bbo_search_range = [(0,10), (-10, 0), (-10,10)]
+    bbo_search_range = [(-10,10), (-10,10),(-10,10),(-10,10),(-10,10),(-10,10),(-10,10),(0,10), (-10, 0), (-10,10)]
     bbo_population_size =100
     bbo_max_time=globT
+
     bbo_ndim = length(par_ind)
     bbo_feval = 100000
     
@@ -247,7 +212,7 @@ end
     end
 
     cbf = x-> println("parameter: ", round.(best_candidate(x), digits=3), " n_rep: ", n_rep, " fitness: ", best_fitness(x) )
-    nopts=1
+    nopts=2
     opt_mat =zeros(nopts,length(par_ind)+1)
 
     for i = 1:nopts
@@ -258,6 +223,8 @@ end
             CallbackInterval=13,
             CallbackFunction= cbf) 
         @show opt_mat[i,:] = vcat(best_candidate(bbsolution1), best_fitness(bbsolution1))'
+
+    
         # @show opt2 = Optim.optimize(fun, best_candidate(bbsolution1), time_limit=locT)
         # @show opt_mat[i,:] = vcat(Optim.minimizer(opt2), Optim.minimum(opt2))'
     end
@@ -265,18 +232,17 @@ end
     return opt_mat
 end
 
-for n_sim =50:300:50
-    for n_firms =  100:50:100
-        for data_mode =3:3
-            est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim, [8,9,10], 120*(n_firms/50) ,
-                     10, data_mode,[1., 1., 1]) ,1:24*2)
-            estimation_result = Dict()
-            push!(estimation_result, "beta_hat" => est_pars)
-            bson("/Users/akp/github/NPSML-Estimator-Price-Data/Price Estimation April 2022/Lognormal-Uniform/MCRES/LNU-02/"*
-            "est_$(n_firms)_sim_$(n_sim)_dmod_$(data_mode)", estimation_result)
+# Parameter estimates 
+
+
+for n_sim =50:25:50
+    for n_firms = 100:100
+        for data_mode=3:2:3
+                est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim,[  1.,  1., 1.], 1:10, "median", 1.5*3600 ,10, data_mode), 1:n_reps)
+                estimation_result = Dict()
+                push!(estimation_result, "beta_hat" => est_pars)
+                bson("/home/ak68/LNU/10p-01/est_$(n_firms)_sim_$(n_sim)_dmode_$(data_mode).bson", estimation_result)
         end
+
     end
 end
-
-
-
