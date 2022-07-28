@@ -15,8 +15,7 @@
 ## Amir Kazempour
 # Trying to experiment with other parameterization
 
-##### there seems to be multicollinearity in the estimates
-##### change the bandwidth of price to 1/10 
+##### checking 3 parameters
 using Distributed
 using BSON
 # using FLoops
@@ -235,7 +234,7 @@ end
 
     # # # Estimated parameters: 
 
-    bbo_search_range = [(-10, 0), (-10,10)]
+    bbo_search_range = [(-10,10), (-10, 0), (-10,10)]
     bbo_population_size =100
     bbo_max_time=globT
     bbo_ndim = length(par_ind)
