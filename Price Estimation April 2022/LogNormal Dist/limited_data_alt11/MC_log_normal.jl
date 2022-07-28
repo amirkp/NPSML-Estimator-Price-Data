@@ -16,8 +16,9 @@
 # Trying to experiment with other parameterization
 
 ##### there seems to be multicollinearity in the estimates
-##### Does number of simulations affect this? 
-#### Quadruple the number of simulations to 200 to see if it changes
+##### add another unobserved term 
+
+
 using Distributed
 using BSON
 # using FLoops
@@ -78,7 +79,7 @@ end
         bup = [
             vcat(b[1:2],b[8])';
             vcat(b[3:4], 0.)';
-            vcat(0 , 0, 0)'
+            vcat(1 , 0, 0)'
         ]
 
 
@@ -163,7 +164,7 @@ end
         bup = [
             vcat(b[1:2], (b[8]))';
             vcat(b[3:4], 0.)';
-            vcat(0 , 0, 0)'
+            vcat(1 , 0, 0)'
         ]
     
         bdown = [
@@ -268,15 +269,15 @@ end
 end
 
 
-for n_sim =200:300:500
+for n_sim =50:300:50
     for n_firms =  50:50:50
         for data_mode =3:3
-            est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim, [9,10], 120*(n_sim/200) ,
+            est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim, [9,10], 60 ,
                      10, data_mode,[1., 1., 1.]) ,1:24*2)
             estimation_result = Dict()
             push!(estimation_result, "beta_hat" => est_pars)
             bson("/Users/akp/github/NPSML-Estimator-Price-Data"*
-            "/Price Estimation April 2022/LogNormal Dist/MCRES/limited_data_alt10/"*
+            "/Price Estimation April 2022/LogNormal Dist/MCRES/limited_data_alt11/"*
             "est_$(n_firms)_sim_$(n_sim)_dmod_$(data_mode)", estimation_result)
         end
     end
