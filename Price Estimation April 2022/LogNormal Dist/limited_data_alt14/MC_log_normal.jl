@@ -16,7 +16,7 @@
 # Trying to experiment with other parameterization
 
 ##### there seems to be multicollinearity in the estimates
-##### checking parameters 1 and 3 
+##### change the bandwidth of price to 1/10 
 using Distributed
 using BSON
 # using FLoops
@@ -270,13 +270,29 @@ end
 for n_sim =50:300:50
     for n_firms =  50:50:50
         for data_mode =3:3
-            est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim, [1,3], 60 ,
+            est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim, [9,10], 60 ,
                      10, data_mode,[1., 1., 10]) ,1:24*2)
             estimation_result = Dict()
             push!(estimation_result, "beta_hat" => est_pars)
             bson("/Users/akp/github/NPSML-Estimator-Price-Data"*
-            "/Price Estimation April 2022/LogNormal Dist/MCRES/limited_data_alt13/"*
-            "est_$(n_firms)_sim_$(n_sim)_dmod_$(data_mode)", estimation_result)
+            "/Price Estimation April 2022/LogNormal Dist/MCRES/limited_data_alt12/"*
+            "est_$(n_firms)_sim_$(n_sim)_dmod_$(data_mode)_pr10", estimation_result)
         end
     end
 end
+
+for n_sim =50:50:50
+    for n_firms =  50:50:50
+        for data_mode =3:3
+            est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim, [9,10], 30 ,
+                     10, data_mode,[1., 1., 1.]) ,96*2+1:96*4)
+            estimation_result = Dict()
+            push!(estimation_result, "beta_hat" => est_pars)
+            bson("/Users/akp/github/NPSML-Estimator-Price-Data"*
+            "/Price Estimation April 2022/LogNormal Dist/MCRES/limited_data_alt9/"*
+            "est_$(n_firms)_sim_$(n_sim)_dmod_$(data_mode)_HT_50_3opt", estimation_result)
+        end
+    end
+end
+
+
