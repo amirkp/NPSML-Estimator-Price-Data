@@ -15,10 +15,9 @@
 ## Amir Kazempour
 # Trying to experiment with other parameterization
 
-### b33d and eeq selection but other parmeterization 
-#### 2 dimension
-
-### MAny optimizations
+##### there seems to be multicollinearity in the estimates
+##### Does number of simulations affect this? 
+#### Quadruple the number of simulations to 200 to see if it changes
 using Distributed
 using BSON
 # using FLoops
@@ -250,7 +249,7 @@ end
     end
 
     cbf = x-> println("parameter: ", round.(best_candidate(x), digits=3), " n_rep: ", n_rep, " fitness: ", best_fitness(x) )
-    nopts=50
+    nopts=2
     opt_mat =zeros(nopts,length(par_ind)+1)
 
     for i = 1:nopts
@@ -269,16 +268,16 @@ end
 end
 
 
-for n_sim =50:50:50
+for n_sim =200:300:500
     for n_firms =  50:50:50
         for data_mode =3:3
-            est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim, [9,10], 30 ,
-                     10, data_mode,[1., 1., 1.]) ,97:96*2)
+            est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim, [9,10], 120*(n_sim/200) ,
+                     10, data_mode,[1., 1., 1.]) ,1:24*2)
             estimation_result = Dict()
             push!(estimation_result, "beta_hat" => est_pars)
             bson("/Users/akp/github/NPSML-Estimator-Price-Data"*
-            "/Price Estimation April 2022/LogNormal Dist/MCRES/limited_data_alt9/"*
-            "est_$(n_firms)_sim_$(n_sim)_dmod_$(data_mode)_HT_50_2opt", estimation_result)
+            "/Price Estimation April 2022/LogNormal Dist/MCRES/limited_data_alt10/"*
+            "est_$(n_firms)_sim_$(n_sim)_dmod_$(data_mode)_", estimation_result)
         end
     end
 end
