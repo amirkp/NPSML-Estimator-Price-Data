@@ -234,7 +234,7 @@ end
 
     # # # Estimated parameters: 
 
-    bbo_search_range = [(-10,10), (-10, 0), (-10,10)]
+    bbo_search_range = [(0,10), (-10, 0), (-10,10)]
     bbo_population_size =100
     bbo_max_time=globT
     bbo_ndim = length(par_ind)
