@@ -16,7 +16,7 @@
 # Trying to experiment with other parameterization
 
 ##### there seems to be multicollinearity in the estimates
-##### change the bandwidth of price to 1/10 
+##### checking parameters 1 and 3 
 using Distributed
 using BSON
 # using FLoops
