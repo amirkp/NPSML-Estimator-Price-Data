@@ -77,9 +77,9 @@ end
 
     function par_gen(b)
         bup = [
-            vcat(b[1:2],b[8])';
+            vcat(b[1:2],5*b[8])';
             vcat(b[3:4], 0.)';
-            vcat(1 , 0, 0)'
+            vcat(5 , 0, 0)'
         ]
 
 
@@ -162,9 +162,9 @@ end
         
     
         bup = [
-            vcat(b[1:2], (b[8]))';
+            vcat(b[1:2], 5*(b[8]))';
             vcat(b[3:4], 0.)';
-            vcat(1 , 0, 0)'
+            vcat(5*1 , 0, 0)'
         ]
     
         bdown = [
