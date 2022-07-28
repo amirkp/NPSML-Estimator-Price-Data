@@ -38,7 +38,7 @@ end
 
 @everywhere begin 
     n_reps =24 # Number of replications (fake datasets)
-    true_pars =  [-1.5, 3.5, -.5, -2.5, .5, -2.5, 1.5, 1, -2, 3]
+    true_pars =  [-1.5, 3.5, -.5, -2.5, .5, -2.5, 1.5, 4, -2, 3]
 end
 
 
@@ -247,7 +247,7 @@ end
     end
 
     cbf = x-> println("parameter: ", round.(best_candidate(x), digits=3), " n_rep: ", n_rep, " fitness: ", best_fitness(x) )
-    nopts=2
+    nopts=1
     opt_mat =zeros(nopts,length(par_ind)+1)
 
     for i = 1:nopts
@@ -268,28 +268,15 @@ end
 for n_sim =50:300:50
     for n_firms =  50:50:50
         for data_mode =3:3
-            est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim, [9,10], 60 ,
+            est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim, [8,9,10], 120 ,
                      10, data_mode,[1., 1., 1]) ,1:24*2)
             estimation_result = Dict()
             push!(estimation_result, "beta_hat" => est_pars)
-            bson("/Users/akp/github/NPSML-Estimator-Price-Data/Price Estimation April 2022/Lognormal-Uniform/MCRES/LNU-01/"*
+            bson("/Users/akp/github/NPSML-Estimator-Price-Data/Price Estimation April 2022/Lognormal-Uniform/MCRES/LNU-02/"*
             "est_$(n_firms)_sim_$(n_sim)_dmod_$(data_mode)", estimation_result)
         end
     end
 end
 
-for n_sim =50:50:50
-    for n_firms =  50:50:50
-        for data_mode =3:3
-            est_pars = pmap(x->replicate_byseed(x, n_firms, n_sim, [9,10], 30 ,
-                     10, data_mode,[1., 1., 1.]) ,96*2+1:96*4)
-            estimation_result = Dict()
-            push!(estimation_result, "beta_hat" => est_pars)
-            bson("/Users/akp/github/NPSML-Estimator-Price-Data"*
-            "/Price Estimation April 2022/LogNormal Dist/MCRES/limited_data_alt9/"*
-            "est_$(n_firms)_sim_$(n_sim)_dmod_$(data_mode)_HT_50_3opt", estimation_result)
-        end
-    end
-end
 
 
