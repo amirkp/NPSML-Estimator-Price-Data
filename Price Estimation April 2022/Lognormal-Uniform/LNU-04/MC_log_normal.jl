@@ -54,9 +54,6 @@ end
     Σ_up = [x1var xcov 0;
             xcov x2var 0;
             0     0    .1]
-    # Σ_up = [0 .1;
-    #         0 .2;
-    #         0 .1]
 
     ycor =-0.5
     y1var = .3

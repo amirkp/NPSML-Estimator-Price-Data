@@ -1,0 +1,827 @@
+#LyX 2.3 created this file. For more info see http://www.lyx.org/
+\lyxformat 544
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman "default" "default"
+\font_sans "default" "default"
+\font_typewriter "default" "default"
+\font_math "auto" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\use_microtype false
+\use_dash_ligatures true
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref false
+\papersize default
+\use_geometry true
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\use_minted 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\leftmargin 1in
+\topmargin 1in
+\rightmargin 1in
+\bottommargin 1in
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\is_math_indent 0
+\math_numbering_side default
+\quotes_style english
+\dynamic_quotes 0
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Section
+The Model Specification 
+\end_layout
+
+\begin_layout Subsection
+Valuation Functions 
+\end_layout
+
+\begin_layout Subsubsection*
+Upstream Valuation: 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi^{u}\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}^{u}x_{1}y_{1}+\beta_{12}^{u}x_{1}y_{2}+\beta_{21}^{u}x_{2}y_{1}+\beta_{22}^{u}x_{2}y_{2}+\beta_{13}^{u}x_{1}\eta.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection*
+Downstream Valuation: 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi^{d}\left(\bm{x},\bm{y},\epsilon,\eta\right)=\beta_{11}^{d}x_{1}y_{1}+\beta_{12}^{d}x_{1}y_{2}+\beta_{21}^{d}x_{2}y_{1}+\beta_{33}^{d}\epsilon\eta.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\end_layout
+
+\begin_layout Subsection
+Distribution of Characteristics: 
+\end_layout
+
+\begin_layout Standard
+The 
+\series bold
+observable characteristics
+\series default
+ of the upstream and the downstream firms are distributed according to multivari
+ate log-normal distributions.
+ 
+\end_layout
+
+\begin_layout Standard
+The 
+\series bold
+unobservable characteristics 
+\series default
+
+\begin_inset Formula $\epsilon$
+\end_inset
+
+ and 
+\begin_inset Formula $\eta$
+\end_inset
+
+ are distributed independently from 
+\begin_inset Formula $\left(x_{1},x_{2}\right)$
+\end_inset
+
+ and 
+\begin_inset Formula $\left(y_{1},y_{2}\right)$
+\end_inset
+
+.
+ I consider two different parametric distributions for the unobservables:
+ (i) Log-normal distribution with parameters 
+\begin_inset Formula $\mu=0$
+\end_inset
+
+ and different scale parameters; and (ii) Uniform distribution over 
+\begin_inset Formula $[0,1]$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+Note that the variances of the unobservable distributions and the coefficients
+ on the unobservable terms in the valuation functions 
+\series bold
+cannot be separately identified
+\series default
+.
+ Thus, we fix the distribution parameters at a known value and only estimate
+ the coefficients on the unobservables.
+ 
+\end_layout
+
+\begin_layout Standard
+The estimator seems to be sensitive to the choice of the parametric distribution
+ and performs better under the uniform distribution.
+ The uniform distribution also has the advantage of being interpreted as
+ quantiles of unobserved CEO's talent.
+ 
+\end_layout
+
+\begin_layout Subsection
+Restrictions
+\end_layout
+
+\begin_layout Standard
+We impose the following restrictions for the model to be identified.
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset Formula $\beta_{22}^{d}=0.$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+The parameters of the distributions of unobservable characteristics are
+ known.
+ 
+\end_layout
+
+\begin_layout Enumerate
+The sign of the coefficients on the unobservable terms in the valuations
+ functions, i.e.
+ 
+\begin_inset Formula $\beta_{13}^{u}$
+\end_inset
+
+ and 
+\begin_inset Formula $\beta_{33}^{d}$
+\end_inset
+
+ are known.
+\end_layout
+
+\begin_layout Subsection
+Unknown Parameters
+\end_layout
+
+\begin_layout Standard
+The vector of parameters to be estimated is 
+\begin_inset Formula 
+\[
+\bm{\theta}=\left(\beta_{11}^{u},\beta_{12}^{u},\beta_{21}^{u},\beta_{22}^{u},\beta_{11}^{d},\beta_{12}^{d},\beta_{21}^{d},\left|\beta_{13}^{u}\right|,\left|\beta_{33}^{d}\right|,\kappa\right).
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Parameter 
+\begin_inset Formula $\kappa$
+\end_inset
+
+ is the equilibrium selection rule.
+ Recall that the profits in the continuous matching game are unique up to
+ an additive constant.
+ The equilibrium selection rule 
+\begin_inset Formula $\kappa$
+\end_inset
+
+ is defined to be the median profit of the downstream firms, the equilibrium
+ transfers are calculated after shifting the profits so that the median
+ downstream profit is equal to 
+\begin_inset Formula $\kappa$
+\end_inset
+
+.
+ The equilibrium selection rule is one of the parameters in the model and
+ is to be jointly estimated with the other parameters.
+\end_layout
+
+\begin_layout Section
+Correlation between 
+\begin_inset Formula $\beta_{33}^{d}$
+\end_inset
+
+ and 
+\begin_inset Formula $\kappa$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We restrict the parameter space to 
+\begin_inset Formula $\left|\beta_{33}^{d}\right|$
+\end_inset
+
+ and the equilibrium selection rule 
+\begin_inset Formula $\kappa$
+\end_inset
+
+ by fixing all the other parameters at the truth.
+ I estimate 
+\begin_inset Formula $\left(\left|\beta_{33}^{d}\right|,\kappa\right)$
+\end_inset
+
+ from 100 replication for sample sizes of N=
+\begin_inset Formula $50,100,200$
+\end_inset
+
+, for the two cases of unobservable distributions: (i) Log-normal distribution;
+ (ii) Uniform Distribution.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename LN-Densities.png
+	width 80col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+The densities of log-normal distributions with different scale parameter.
+ The dashed line is the density of standard normal distribution.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float table
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="13" columns="3">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Sample Size
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Distribution of 
+\begin_inset Formula $\epsilon$
+\end_inset
+
+ and 
+\begin_inset Formula $\eta$
+\end_inset
+
+ 
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $Cor$
+\end_inset
+
+
+\begin_inset Formula $\left(\hat{\beta}_{33}^{d},\hat{\kappa}\right)$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+50
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $LN\left(\mu=0,\sigma^{2}=0.1\right)$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.994
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+50
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $LN\left(\mu=0,\sigma^{2}=0.5\right)$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.951
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+50
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $LN\left(\mu=0,\sigma^{2}=1.0\right)$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.912
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+50
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\text{Uniform}\left(0,1\right)$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.83
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+100
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $LN\left(\mu=0,\sigma^{2}=0.1\right)$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.994
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+100
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $LN\left(\mu=0,\sigma^{2}=0.5\right)$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.966
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+100
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $LN\left(\mu=0,\sigma^{2}=1.0\right)$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.93
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+100
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\text{Uniform}\left(0,1\right)$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.831
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+200
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $LN\left(\mu=0,\sigma^{2}=0.1\right)$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.996
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+200
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $LN\left(\mu=0,\sigma^{2}=0.5\right)$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.981
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+200
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $LN\left(\mu=0,\sigma^{2}=1.0\right)$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.961
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+200
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\text{Uniform}\left(0,1\right)$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.767
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Correlation between 
+\begin_inset Formula $\hat{\beta}_{33}^{d}$
+\end_inset
+
+ and 
+\begin_inset Formula $\hat{\kappa}$
+\end_inset
+
+ in a sample of estimates from 100 replications.
+ All the other parameters are fixed at the truth.
+ The estimator makes use of the same distribution of the unobservables as
+ the true data generating process, i.e.
+ there is no misspecification due to the unobservable distributions.
+ The upstream and downstream unobservables are drawn from identical distribution
+s.
+ 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_body
+\end_document
